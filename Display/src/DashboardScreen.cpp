@@ -5,6 +5,7 @@
 #include "UiTheme.h"
 
 static constexpr float AlarmThresholdKpa = 8.0f;
+static constexpr uint16_t DashboardUpdateIntervalMs = 100;
 static constexpr int16_t MeterTop = 88;
 static constexpr int16_t MeterHeight = 76;
 static constexpr int16_t MenuX = 238;
@@ -29,7 +30,7 @@ void DashboardScreen::begin() {
 }
 
 void DashboardScreen::update(uint32_t nowMs) {
-  if (nowMs - lastUpdateMs_ < 60) {
+  if (nowMs - lastUpdateMs_ < DashboardUpdateIntervalMs) {
     return;
   }
 
@@ -72,7 +73,7 @@ void DashboardScreen::showTouchStatus(int16_t x, int16_t y) {
   display_.setTextSize(1);
   display_.setTextColor(UiTheme::Text);
   display_.setCursor(TouchStatusX, TouchStatusY);
-  display_.print("Touch ");
+  display_.print("Touch: ");
   display_.print(x);
   display_.print(",");
   display_.print(y);
@@ -89,7 +90,7 @@ void DashboardScreen::showNotPressed() {
   display_.setTextSize(1);
   display_.setTextColor(UiTheme::Muted);
   display_.setCursor(TouchStatusX, TouchStatusY);
-  display_.print("Not pressed");
+  display_.print("Touch: none");
   lastTouchX_ = -1;
   lastTouchY_ = -1;
 }
@@ -126,31 +127,38 @@ void DashboardScreen::drawCylinder(uint8_t index, int16_t x, int16_t y, int16_t 
   const int16_t fillHeight = constrain(static_cast<int16_t>((-valuesKpa_[index]) * MeterHeight / 100.0f), 0, MeterHeight);
   const int16_t fillY = MeterTop + MeterHeight - fillHeight;
 
-  display_.fillRect(x + 2, y + 4, w - 4, 156, UiTheme::Panel);
+  if (force) {
+    display_.fillRect(x + 2, y + 4, w - 4, 156, UiTheme::Panel);
+    display_.setTextColor(UiTheme::Text);
+    display_.setTextSize(2);
+    display_.setCursor(center - 6, y + 12);
+    display_.print(index + 1);
+    display_.setTextSize(1);
+    display_.setCursor(center - 10, y + 58);
+    display_.print("kPa");
+
+    display_.setTextColor(UiTheme::Text);
+    display_.setCursor(meterX - 18, MeterTop);
+    display_.print("0");
+    display_.setCursor(meterX - 24, MeterTop + 34);
+    display_.print("-50");
+    display_.setCursor(meterX - 30, MeterTop + 72);
+    display_.print("-100");
+    display_.drawRect(meterX, MeterTop, 25, MeterHeight, UiTheme::Border);
+    display_.drawRoundRect(center - 28, y + 132, 56, 20, 3, UiTheme::Border);
+  }
+
+  display_.fillRect(center - 28, y + 36, 56, 18, UiTheme::Panel);
   display_.setTextColor(UiTheme::Text);
-  display_.setTextSize(2);
-  display_.setCursor(center - 6, y + 12);
-  display_.print(index + 1);
   display_.setTextSize(2);
   display_.setCursor(center - 22, y + 36);
   display_.print(static_cast<int>(valuesKpa_[index]));
-  display_.setTextSize(1);
-  display_.setCursor(center - 10, y + 58);
-  display_.print("kPa");
 
-  display_.setTextColor(UiTheme::Text);
-  display_.setCursor(meterX - 18, MeterTop);
-  display_.print("0");
-  display_.setCursor(meterX - 24, MeterTop + 34);
-  display_.print("-50");
-  display_.setCursor(meterX - 30, MeterTop + 72);
-  display_.print("-100");
-  display_.drawRect(meterX, MeterTop, 25, MeterHeight, UiTheme::Border);
   display_.fillRect(meterX + 1, MeterTop + 1, 23, MeterHeight - 2, UiTheme::Background);
   display_.fillRect(meterX + 1, fillY, 23, fillHeight, meterColor);
   display_.drawFastHLine(meterX - 4, fillY, 33, UiTheme::Text);
 
-  display_.drawRoundRect(center - 28, y + 132, 56, 20, 3, UiTheme::Border);
+  display_.fillRect(center - 24, y + 136, 48, 10, UiTheme::Panel);
   display_.setTextSize(1);
   display_.setCursor(center - 22, y + 138);
   display_.print(static_cast<int>(valuesKpa_[index]));
@@ -166,35 +174,41 @@ void DashboardScreen::drawBottomBar(bool force) {
   }
 
   const bool alarm = diff > AlarmThresholdKpa;
-  display_.fillRect(8, 205, 304, 33, UiTheme::Background);
+  if (force) {
+    display_.fillRect(8, 205, 304, 33, UiTheme::Background);
+    UiTheme::drawPanel(display_, 10, 207, 94, 30);
+    display_.setTextSize(1);
+    display_.setTextColor(UiTheme::Text);
+    display_.setCursor(20, 212);
+    display_.print("MAX VERSCHIL");
 
-  UiTheme::drawPanel(display_, 10, 207, 94, 30);
-  display_.setTextSize(1);
-  display_.setTextColor(UiTheme::Text);
-  display_.setCursor(20, 212);
-  display_.print("MAX VERSCHIL");
+    UiTheme::drawPanel(display_, 112, 207, 94, 30);
+    display_.setTextSize(1);
+    display_.setTextColor(UiTheme::Text);
+    display_.setCursor(142, 212);
+    display_.print("STATUS");
+
+    display_.fillRoundRect(MenuX, MenuY, MenuW, MenuH, 4, UiTheme::AccentDark);
+    display_.drawRoundRect(MenuX, MenuY, MenuW, MenuH, 4, UiTheme::Accent);
+    display_.setTextSize(1);
+    display_.setTextColor(UiTheme::Text);
+    display_.setCursor(MenuX + 10, MenuY + 8);
+    display_.print("MENU *");
+  }
+
+  display_.fillRect(30, 224, 62, 12, UiTheme::Panel);
   display_.setTextColor(alarm ? UiTheme::Danger : UiTheme::Good);
   display_.setTextSize(2);
   display_.setCursor(38, 224);
   display_.print(static_cast<int>(diff));
   display_.print(" kPa");
 
-  UiTheme::drawPanel(display_, 112, 207, 94, 30);
-  display_.setTextSize(1);
-  display_.setTextColor(UiTheme::Text);
-  display_.setCursor(142, 212);
-  display_.print("STATUS");
+  display_.fillRect(122, 224, 76, 12, UiTheme::Panel);
   display_.setTextSize(1);
   display_.setTextColor(alarm ? UiTheme::Danger : UiTheme::Good);
   display_.setCursor(alarm ? 128 : 146, 226);
   display_.print(alarm ? "BIJSTELLEN" : "GOED");
 
-  display_.fillRoundRect(MenuX, MenuY, MenuW, MenuH, 4, UiTheme::AccentDark);
-  display_.drawRoundRect(MenuX, MenuY, MenuW, MenuH, 4, UiTheme::Accent);
-  display_.setTextSize(1);
-  display_.setTextColor(UiTheme::Text);
-  display_.setCursor(MenuX + 10, MenuY + 8);
-  display_.print("MENU *");
   lastDiffTenths_ = diffTenths;
 }
 
