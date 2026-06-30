@@ -7,6 +7,8 @@
 
 class SensorManager {
  public:
+  static constexpr uint8_t MaxChannels = 6;
+
   explicit SensorManager(SettingsManager &settings);
 
   enum class Mode {
@@ -58,8 +60,8 @@ class SensorManager {
   uint8_t payloadLength_ = 0;
   uint8_t payloadIndex_ = 0;
   uint8_t payload_[sizeof(Carbtune::SensorFrame)]{};
-  float valuesKpa_[4] = {-42.0f, -40.0f, -41.0f, -44.0f};
-  int16_t rawValues_[4] = {0, 0, 0, 0};
+  float valuesKpa_[MaxChannels] = {-42.0f, -40.0f, -41.0f, -44.0f, -43.0f, -45.0f};
+  int16_t rawValues_[MaxChannels] = {0, 0, 0, 0, 0, 0};
   uint16_t supplyMv_ = 0;
   int16_t temperatureCentiC_ = 0;
   Mode mode_ = Mode::Demo;

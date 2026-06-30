@@ -7,10 +7,12 @@
 #include "version.h"
 
 AppController::AppController(Arduino_GFX &display, TouchInput &touchInput,
-                             BacklightManager &backlightManager, ScreenManager &screenManager)
+                             BacklightManager &backlightManager, SensorManager &sensorManager,
+                             ScreenManager &screenManager)
     : display_(display),
       touchInput_(touchInput),
       backlightManager_(backlightManager),
+      sensorManager_(sensorManager),
       screenManager_(screenManager) {}
 
 void AppController::begin() {
@@ -20,6 +22,7 @@ void AppController::begin() {
   display_.invertDisplay(TFT_INVERT_COLORS);
   display_.fillScreen(UiTheme::Background);
   touchInput_.begin();
+  sensorManager_.begin();
 
   Serial.println();
   Serial.println(FW_NAME);
@@ -32,6 +35,7 @@ void AppController::begin() {
 void AppController::update() {
   const uint32_t nowMs = millis();
   backlightManager_.update(nowMs);
+  sensorManager_.update(nowMs);
   const TouchState touchState = touchInput_.update(nowMs);
   handleSerialInput();
   screenManager_.update(nowMs, touchState);

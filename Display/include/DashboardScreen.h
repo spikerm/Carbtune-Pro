@@ -3,9 +3,11 @@
 #include <Arduino.h>
 #include <Arduino_GFX_Library.h>
 
+#include "Sensors/SensorManager.h"
+
 class DashboardScreen {
  public:
-  explicit DashboardScreen(Arduino_GFX &display);
+  DashboardScreen(Arduino_GFX &display, SensorManager &sensorManager);
 
   void begin();
   void update(uint32_t nowMs);
@@ -17,16 +19,22 @@ class DashboardScreen {
 
  private:
   void drawStatic();
+  void drawHeader(bool force);
   void drawCylinder(uint8_t index, int16_t x, int16_t y, int16_t w, bool force);
   void drawBottomBar(bool force);
-  void updateDemoValues(uint32_t nowMs);
   float maxDifference() const;
   uint8_t outlierIndex() const;
+  const char *statusText() const;
+  uint16_t statusColor() const;
 
   Arduino_GFX &display_;
-  float valuesKpa_[4] = {-42.0f, -40.0f, -41.0f, -44.0f};
-  int16_t lastValueTenths_[4] = {-32768, -32768, -32768, -32768};
+  SensorManager &sensorManager_;
+  float valuesKpa_[SensorManager::MaxChannels] = {-42.0f, -40.0f, -41.0f, -44.0f, -43.0f, -45.0f};
+  int16_t lastValueTenths_[SensorManager::MaxChannels] = {-32768, -32768, -32768,
+                                                          -32768, -32768, -32768};
   int16_t lastDiffTenths_ = -32768;
+  SensorManager::Mode lastMode_ = SensorManager::Mode::NoData;
+  SensorManager::Status lastStatus_ = SensorManager::Status::Warning;
   int16_t lastTouchX_ = -2;
   int16_t lastTouchY_ = -2;
   uint8_t cylinderCount_ = 4;

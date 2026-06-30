@@ -3,6 +3,7 @@
 #include "SensorNodeConfig.h"
 
 static uint32_t lastFrameMs = 0;
+static uint32_t lastLogMs = 0;
 
 static void sendHello() {
   Serial2.write(Carbtune::PacketMagic);
@@ -18,7 +19,11 @@ static Carbtune::SensorFrame readFrame() {
   frame.uptimeMs = millis();
 
   for (uint8_t channel = 0; channel < Carbtune::ChannelCount; ++channel) {
-    frame.vacuumRaw[channel] = analogRead(SensorAnalogPins[channel]);
+    if (channel < SensorAnalogPinCount) {
+      frame.vacuumRaw[channel] = analogRead(SensorAnalogPins[channel]);
+    } else {
+      frame.vacuumRaw[channel] = 0;
+    }
   }
 
   frame.supplyMv = static_cast<uint16_t>((analogReadMilliVolts(SupplySensePin) * 2U));
@@ -57,5 +62,8 @@ void loop() {
   lastFrameMs = millis();
   const Carbtune::SensorFrame frame = readFrame();
   sendFrame(frame);
-  Serial.println(Carbtune::formatSensorFrame(frame));
+  if (millis() - lastLogMs >= 1000) {
+    lastLogMs = millis();
+    Serial.println(Carbtune::formatSensorFrame(frame));
+  }
 }

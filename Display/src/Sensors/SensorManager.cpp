@@ -25,7 +25,7 @@ void SensorManager::update(uint32_t nowMs) {
 }
 
 uint8_t SensorManager::channelCount() const {
-  return Carbtune::ChannelCount;
+  return constrain(settings_.cylinders(), 2, MaxChannels);
 }
 
 float SensorManager::valueKpa(uint8_t channel) const {
@@ -105,7 +105,9 @@ void SensorManager::updateDemo(uint32_t nowMs) {
   valuesKpa_[1] = -40.0f + sinf(t * 0.9f + 1.0f) * 3.5f;
   valuesKpa_[2] = -41.0f + sinf(t * 1.3f + 2.0f) * 4.2f;
   valuesKpa_[3] = -44.0f + sinf(t * 0.8f + 3.0f) * 5.0f;
-  for (uint8_t channel = 0; channel < channelCount(); ++channel) {
+  valuesKpa_[4] = -43.0f + sinf(t * 1.0f + 4.0f) * 4.5f;
+  valuesKpa_[5] = -45.0f + sinf(t * 0.7f + 5.0f) * 5.5f;
+  for (uint8_t channel = 0; channel < MaxChannels; ++channel) {
     rawValues_[channel] = static_cast<int16_t>(map(static_cast<long>(-valuesKpa_[channel]), 0, 100, 0, 4095));
   }
 }
@@ -157,7 +159,11 @@ void SensorManager::readUart(uint32_t nowMs) {
 }
 
 void SensorManager::acceptFrame(const Carbtune::SensorFrame &frame, uint32_t nowMs) {
-  for (uint8_t channel = 0; channel < channelCount(); ++channel) {
+  for (uint8_t channel = 0; channel < MaxChannels; ++channel) {
+    if (channel >= Carbtune::ChannelCount) {
+      rawValues_[channel] = 0;
+      continue;
+    }
     rawValues_[channel] = frame.vacuumRaw[channel];
     valuesKpa_[channel] = rawToKpa(frame.vacuumRaw[channel]);
   }
