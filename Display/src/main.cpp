@@ -30,7 +30,7 @@ static DashboardScreen dashboardScreen(*gfx, sensorManager);
 static GraphScreen graphScreen(*gfx);
 static SettingsScreen settingsScreen(*gfx, settingsManager);
 static SplashScreen splashScreen(*gfx);
-static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput, backlightManager);
+static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput, backlightManager, sensorManager);
 static ScreenManager screenManager(splashScreen, dashboardScreen, settingsScreen, graphScreen,
                                    calibrationScreen, touchDiagnosticsScreen, touchInput);
 static AppController appController(*gfx, touchInput, backlightManager, sensorManager, screenManager);

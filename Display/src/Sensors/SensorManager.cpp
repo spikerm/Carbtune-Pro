@@ -37,21 +37,19 @@ int16_t SensorManager::rawValue(uint8_t channel) const {
 }
 
 float SensorManager::maxDeltaKpa() const {
-  float lowest = valuesKpa_[0];
-  float highest = valuesKpa_[0];
+  float maxDelta = 0.0f;
   for (uint8_t index = 1; index < channelCount(); ++index) {
-    lowest = min(lowest, valuesKpa_[index]);
-    highest = max(highest, valuesKpa_[index]);
+    maxDelta = max(maxDelta, fabsf(valuesKpa_[index] - valuesKpa_[0]));
   }
-  return highest - lowest;
+  return maxDelta;
 }
 
 SensorManager::Status SensorManager::status() const {
   const float delta = maxDeltaKpa();
-  if (delta > 10.0f) {
+  if (delta > 5.0f) {
     return Status::Adjust;
   }
-  if (delta > 6.0f) {
+  if (delta > 2.0f) {
     return Status::Warning;
   }
   return Status::Good;
