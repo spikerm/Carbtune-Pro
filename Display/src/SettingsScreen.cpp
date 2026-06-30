@@ -7,7 +7,7 @@ namespace {
 constexpr UiRect HomeRect{8, 205, 96, 30};
 constexpr UiRect GraphRect{112, 205, 96, 30};
 constexpr UiRect SettingsRect{216, 205, 96, 30};
-constexpr UiRect CalibrationRect{176, 164, 64, 22};
+constexpr UiRect CalibrationRect{238, 176, 58, 18};
 
 void drawHeader(Arduino_GFX &display) {
   display.fillScreen(UiTheme::Background);
@@ -50,17 +50,23 @@ void SettingsScreen::begin() {
   display_.fillRoundRect(266, 134, 32, 17, 8, UiTheme::Good);
   display_.fillCircle(289, 142, 7, UiTheme::Text);
 
-  display_.drawLine(8, 157, 312, 157, UiTheme::Border);
-  drawRowLabel(display_, "DEMPING / FILTER", 166);
-  display_.setCursor(246, 166);
+  display_.drawLine(8, 154, 312, 154, UiTheme::Border);
+  drawRowLabel(display_, "DEMPING / FILTER", 160);
+  display_.setCursor(246, 160);
   display_.print("0.7 s");
-  display_.setCursor(290, 166);
+  display_.setCursor(290, 160);
   display_.print(">");
 
-  display_.drawLine(8, 190, 312, 190, UiTheme::Border);
-  drawRowLabel(display_, "KALIBRATIE (0 kPa)", 178);
+  display_.drawLine(8, 172, 312, 172, UiTheme::Border);
+  drawRowLabel(display_, "AUTO HELDERHEID", 178);
+  display_.fillRoundRect(184, 174, 32, 17, 8, UiTheme::Good);
+  display_.fillCircle(207, 182, 7, UiTheme::Text);
+  drawRowLabel(display_, "HELDERHEID", 191);
+  display_.setCursor(184, 191);
+  display_.print("80%");
+
+  drawRowLabel(display_, "KALIBRATIE", 202);
   UiButton(CalibrationRect, "START").draw(display_);
-  drawRowLabel(display_, "OVER APPARAAT", 202);
 
   UiButton(HomeRect, "HOME").draw(display_);
   UiButton(GraphRect, "GRAFIEK").draw(display_);
