@@ -13,6 +13,8 @@ constexpr int16_t ViewY = 34;
 constexpr int16_t ViewW = 304;
 constexpr int16_t ViewH = 168;
 constexpr int16_t ContentHeight = 410;
+constexpr int16_t HeaderHeight = 32;
+constexpr int16_t FooterY = 203;
 
 bool contentHit(int16_t contentY, int16_t top, int16_t height = 28) {
   return contentY >= top && contentY < top + height;
@@ -66,8 +68,8 @@ bool SettingsScreen::isCalibrationHit(int16_t x, int16_t y) const {
 }
 
 void SettingsScreen::drawHeader() {
-  display_.fillRect(0, 0, UiTheme::ScreenWidth, 32, UiTheme::Background);
-  display_.drawLine(0, 31, UiTheme::ScreenWidth, 31, UiTheme::Border);
+  display_.fillRect(0, 0, UiTheme::ScreenWidth, HeaderHeight, UiTheme::Background);
+  display_.drawLine(0, HeaderHeight - 1, UiTheme::ScreenWidth, HeaderHeight - 1, UiTheme::Border);
   UiButton({8, 5, 32, 22}, "<").draw(display_);
   display_.setTextColor(UiTheme::Text);
   display_.setTextSize(2);
@@ -76,8 +78,9 @@ void SettingsScreen::drawHeader() {
 }
 
 void SettingsScreen::drawFooter() {
-  display_.fillRect(0, 203, UiTheme::ScreenWidth, 37, UiTheme::Background);
-  display_.drawLine(8, 203, 312, 203, UiTheme::Border);
+  display_.fillRect(0, FooterY, UiTheme::ScreenWidth, UiTheme::ScreenHeight - FooterY,
+                    UiTheme::Background);
+  display_.drawLine(8, FooterY, 312, FooterY, UiTheme::Border);
   UiButton(HomeRect, "HOME").draw(display_);
   UiButton(GraphRect, "GRAFIEK").draw(display_);
   UiButton(SettingsRect, "INSTELLINGEN").draw(display_, true);
