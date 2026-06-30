@@ -38,6 +38,14 @@ float SettingsManager::alarmDeltaKpa() const {
   return alarmDeltaKpa_;
 }
 
+bool SettingsManager::demoFallback() const {
+  return demoFallback_;
+}
+
+bool SettingsManager::liveUartEnabled() const {
+  return liveUartEnabled_;
+}
+
 void SettingsManager::setAutoBrightness(bool enabled) {
   autoBrightness_ = enabled;
 }

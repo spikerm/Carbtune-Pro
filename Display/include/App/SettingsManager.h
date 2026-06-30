@@ -15,6 +15,8 @@ class SettingsManager {
   bool autoScale() const;
   float filterSeconds() const;
   float alarmDeltaKpa() const;
+  bool demoFallback() const;
+  bool liveUartEnabled() const;
 
   void setAutoBrightness(bool enabled);
   void setBrightnessManualPercent(uint8_t percent);
@@ -28,4 +30,6 @@ class SettingsManager {
   bool autoScale_ = true;
   float filterSeconds_ = 0.7f;
   float alarmDeltaKpa_ = 10.0f;
+  bool demoFallback_ = true;
+  bool liveUartEnabled_ = true;
 };
