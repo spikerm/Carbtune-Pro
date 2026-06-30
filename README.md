@@ -2,7 +2,7 @@
 
 ESP32 carbtune firmware workspace for the display and sensor node.
 
-Current firmware version: `v6.6.0-alpha2`.
+Current firmware version: `v7.0.0-alpha1`.
 
 ## Layout
 
@@ -10,67 +10,90 @@ Current firmware version: `v6.6.0-alpha2`.
 - `SensorNode/` - UART sensor node firmware
 - `Shared/` - shared protocol/version PlatformIO library
 
+Display firmware is being refactored into the v7 architecture:
+
+```text
+Display/src/App
+Display/src/Screens
+Display/src/Widgets
+Display/src/Theme
+Display/src/Touch
+Display/src/Sensors
+Display/src/Storage
+Display/src/Assets
+```
+
+The current v7 start keeps the working dark dashboard, touch MENU flow, serial
+navigation, and demo channel data while introducing `AppController`,
+`ScreenManager`, theme/widget primitives, runtime settings, demo
+`SensorManager`, and LDR based `BacklightManager`.
+
 ## Build
 
 ```sh
 pio run
-pio run -e display -t upload
-pio run -e sensornode -t upload
-pio device monitor -e display
-pio device monitor -e sensornode
 ```
 
-The display target uses Arduino_GFX for the TFT.
+## Upload
+
+```sh
+pio run -e display -t upload
+pio run -e sensornode -t upload
+```
 
 Display upload/monitor port: `COM14`.
 SensorNode upload/monitor port: `COM9`.
 
-On the ESP32-2432S028R display, the firmware shows a dark Carbtune splash
-screen for about 2.5 seconds, then opens the Carbtune ESP32 dashboard with demo
-channel data.
+## Monitor
+
+```sh
+pio device monitor -e display
+pio device monitor -e sensornode
+```
 
 ## Display UI
 
-The v6.6 display UI uses a dark 320x240 layout with white text, blue controls,
-green normal meters, and yellow/red warning states.
+The display target uses Arduino_GFX for the TFT.
 
-- Splash screen: `CARBTUNE PRO ESP32` with initializing progress indicator.
-- Dashboard: 2- or 4-cylinder meter layout, kPa values, max difference,
-  status, and a `MENU` button.
-- Settings: cylinder count, units, auto scale, damping/filter, calibration
-  start, about row, and bottom navigation.
-- Graph: 60 second demo history with four colored traces and range controls.
-- Calibration: zero-kPa instruction screen with current pressure and START.
-- Diagnostics: live XPT2046 touch raw/mapped values and controller state.
+- Startup splash: dark screen, firmware version, initialization checklist, then dashboard.
+- Dashboard: four kPa channels, vertical meters, max difference, status, MENU.
+- Settings: cylinder controls, brightness settings, calibration shortcut, navigation.
+- Graph: dark demo graph view.
+- Calibration: zero-kPa placeholder workflow.
+- Diagnostics: touch raw/mapped values plus LDR/backlight diagnostics.
 
-Touch is still being debugged, so every screen can also be selected from the
-display serial monitor:
+## Backlight
+
+The display reads the LDR on `LDR_PIN` and smooths the value before changing
+backlight brightness. Defaults are:
+
+- `autoBrightness = true`
+- `brightnessMin = 40%`
+- `brightnessMax = 100%`
+- `brightnessManual = 80%`
+
+If PWM/LEDC attach fails, the firmware keeps the display on with a fixed
+backlight. If LDR raw remains `0`, diagnostics shows `0 / check pin` while the
+firmware continues normally.
+
+## Serial Navigation
+
+Use the display monitor for debug navigation:
 
 ```text
 h = home/dashboard
 s = settings
 g = graph
 c = calibration
-d = touch diagnostics
+d = diagnostics
+r = splash
 ```
-
-When touch is available, `MENU` opens settings. The settings bottom navigation
-can return HOME or open GRAFIEK, and the calibration row opens the zero-kPa
-calibration screen.
 
 ## Touch Diagnostics And Calibration
 
-Touch input is read through the display firmware `TouchInput` module. It polls
-the XPT2046 controller over SPI, filters idle values such as `8191,8191`, maps
-valid readings to the 320x240 screen, and logs touches on the serial monitor:
-
-```text
-Touch raw=1234,2345 mapped=82,137 pressed
-```
-
-Send `d` in `pio device monitor -e display` to open the touch diagnostics
-screen. It shows raw X/Y, pressure Z, mapped screen X/Y, pressed state,
-long-press state, IRQ pin state, and the active touch controller.
+Touch input polls the XPT2046 controller over SPI, filters idle values such as
+`8191,8191`, maps valid readings to the 320x240 screen, and logs touches on the
+serial monitor.
 
 To tune a different panel, open `Display/include/BoardConfig.h` and adjust:
 
@@ -81,6 +104,3 @@ To tune a different panel, open `Display/include/BoardConfig.h` and adjust:
 - `TOUCH_SWAP_XY`
 - `TOUCH_INVERT_X`
 - `TOUCH_INVERT_Y`
-
-Use `pio device monitor -e display`, press the screen corners, and copy the
-observed raw values into those constants.
