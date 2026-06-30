@@ -177,8 +177,3 @@ void CarbtuneScreen::showNotPressed() {
   lastTouchX_ = -1;
   lastTouchY_ = -1;
 }
-
-bool CarbtuneScreen::isMenuHit(int16_t x, int16_t y) const {
-  return x >= MenuX && x < (MenuX + MenuWidth) &&
-         y >= MenuY && y < (MenuY + MenuHeight);
-}

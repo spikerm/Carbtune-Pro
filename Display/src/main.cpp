@@ -7,6 +7,7 @@
 #include "CarbtuneScreen.h"
 #include "DisplayColors.h"
 #include "SelfTest.h"
+#include "TouchDiagnosticsScreen.h"
 #include "TouchInput.h"
 #include "version.h"
 
@@ -18,9 +19,11 @@ static XPT2046_Touchscreen touch(TOUCH_CS);
 static TouchInput touchInput(touch);
 static SelfTest selfTest(*gfx, touchInput, sdSpi);
 static CarbtuneScreen carbtuneScreen(*gfx);
+static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput);
 static uint32_t selfTestShownMs = 0;
 static bool dashboardStarted = false;
 static bool dashboardVisible = false;
+static bool diagnosticsVisible = false;
 static bool menuWasPressed = false;
 
 static void showSelfTestScreen() {
@@ -32,9 +35,37 @@ static void showDashboard() {
   carbtuneScreen.begin();
   dashboardStarted = true;
   dashboardVisible = true;
+  diagnosticsVisible = false;
+}
+
+static void showTouchDiagnosticsScreen(const TouchState &touchState) {
+  touchDiagnosticsScreen.begin();
+  touchDiagnosticsScreen.update(touchState);
+  dashboardVisible = false;
+  diagnosticsVisible = true;
+}
+
+static bool isMenuTouchTarget(const TouchState &touchState) {
+  return touchState.pressed &&
+         touchState.screenX >= 0 && touchState.screenX < 112 &&
+         touchState.screenY >= 198 && touchState.screenY < 240;
 }
 
 static void handleTouch(const TouchState &touchState) {
+  const bool menuPressed = isMenuTouchTarget(touchState);
+  if (menuPressed && !menuWasPressed) {
+    if (dashboardVisible) {
+      showTouchDiagnosticsScreen(touchState);
+    } else {
+      showDashboard();
+    }
+
+    menuWasPressed = true;
+    return;
+  }
+
+  menuWasPressed = menuPressed;
+
   if (dashboardVisible) {
     if (touchState.pressed) {
       carbtuneScreen.showTouchStatus(touchState.screenX, touchState.screenY);
@@ -43,17 +74,9 @@ static void handleTouch(const TouchState &touchState) {
     }
   }
 
-  const bool menuPressed = touchState.pressed &&
-                           carbtuneScreen.isMenuHit(touchState.screenX, touchState.screenY);
-  if (menuPressed && !menuWasPressed) {
-    if (dashboardVisible) {
-      showSelfTestScreen();
-    } else {
-      showDashboard();
-    }
+  if (diagnosticsVisible) {
+    touchDiagnosticsScreen.update(touchState);
   }
-
-  menuWasPressed = menuPressed;
 }
 
 void setup() {
@@ -72,7 +95,7 @@ void loop() {
   const uint32_t nowMs = millis();
   const TouchState touchState = touchInput.update(nowMs);
 
-  if (!dashboardStarted && !dashboardVisible) {
+  if (!dashboardStarted && !dashboardVisible && !diagnosticsVisible) {
     if (nowMs - selfTestShownMs >= 5000) {
       showDashboard();
     }
