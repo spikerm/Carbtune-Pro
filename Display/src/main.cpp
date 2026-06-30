@@ -14,7 +14,7 @@ static Arduino_DataBus *displayBus =
     new Arduino_ESP32SPI(TFT_DC, TFT_CS, TFT_SCLK, TFT_MOSI, TFT_MISO);
 static Arduino_GFX *gfx = new Arduino_ILI9341(displayBus, TFT_RST, 1);
 static SPIClass sdSpi(VSPI);
-static XPT2046_Touchscreen touch(TOUCH_CS, TOUCH_IRQ);
+static XPT2046_Touchscreen touch(TOUCH_CS);
 static TouchInput touchInput(touch);
 static SelfTest selfTest(*gfx, touchInput, sdSpi);
 static CarbtuneScreen carbtuneScreen(*gfx);
