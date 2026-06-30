@@ -2,7 +2,7 @@
 
 ESP32 carbtune firmware workspace for the display and sensor node.
 
-Current firmware version: `v7.0.0-alpha1`.
+Current firmware version: `v7.0.0-alpha2`.
 
 ## Layout
 
@@ -23,10 +23,9 @@ Display/src/Storage
 Display/src/Assets
 ```
 
-The current v7 start keeps the working dark dashboard, touch MENU flow, serial
-navigation, and demo channel data while introducing `AppController`,
-`ScreenManager`, theme/widget primitives, runtime settings, demo
-`SensorManager`, and LDR based `BacklightManager`.
+The v7.0.0-alpha2 build keeps the dark dashboard and touch MENU flow, adds a
+scrollable settings list for the 320x240 display, and can use SensorNode UART
+frames with demo fallback.
 
 ## Build
 
@@ -56,11 +55,51 @@ pio device monitor -e sensornode
 The display target uses Arduino_GFX for the TFT.
 
 - Startup splash: dark screen, firmware version, initialization checklist, then dashboard.
-- Dashboard: four kPa channels, vertical meters, max difference, status, MENU.
-- Settings: cylinder controls, brightness settings, calibration shortcut, navigation.
+- Dashboard: adaptive 2 to 6 cylinder layout, vertical meters, live/demo/no-data
+  source, CH1 reference line, max delta in the header, large status badge, MENU.
+- Settings: scrollable list, 2/3/4/5/6 cylinder selection, brightness settings,
+  calibration shortcut, navigation.
 - Graph: dark demo graph view.
 - Calibration: zero-kPa placeholder workflow.
-- Diagnostics: touch raw/mapped values plus LDR/backlight diagnostics.
+- Diagnostics: touch raw/mapped values, LDR/backlight diagnostics, sensor mode,
+  cylinder count, CH1 reference value, per-channel delta, and max delta.
+
+## Cylinder Reference Mode
+
+Cylinder 1 is the dashboard reference. The blue `REF CH1` line is drawn across
+all meters at the current CH1 vacuum level. Other channels show their delta
+relative to CH1. Status thresholds are temporary runtime constants:
+
+- `GOED`: max CH1 delta <= 2 kPa
+- `LET OP`: max CH1 delta <= 5 kPa
+- `BIJSTELLEN`: max CH1 delta > 5 kPa
+
+These thresholds are intended to become configurable later.
+
+## SensorNode UART
+
+The display listens for shared `SensorFrame` packets on `Serial2` and validates
+magic, version, type, payload length, and checksum. Valid frames switch the
+sensor source to `LIVE`. If frames stop for more than 2 seconds, the display
+falls back to demo data when demo fallback is enabled.
+
+Current pins:
+
+- Display RX: `GPIO27`
+- Display TX: `GPIO22`
+- SensorNode RX: `GPIO22`
+- SensorNode TX: `GPIO27`
+
+Wiring:
+
+```text
+Display TX -> SensorNode RX
+Display RX -> SensorNode TX
+GND        -> GND
+```
+
+The temporary raw conversion maps ADC `0..4095` to `-100..0 kPa` until pressure
+calibration is added.
 
 ## Backlight
 
