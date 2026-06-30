@@ -33,10 +33,18 @@ String formatSensorFrame(const SensorFrame &frame) {
   for (uint8_t channel = 0; channel < ChannelCount; ++channel) {
     output += " ch";
     output += String(channel + 1);
-    output += "=";
-    output += String(frame.vacuumRaw[channel]);
+    output += " raw=";
+    output += String(frame.raw[channel]);
+    output += " filt=";
+    output += String(frame.filtered[channel]);
+    output += " hz=";
+    output += String(frame.pulseHzCenti[channel] / 100.0f, 2);
   }
 
+  output += " rpm=";
+  output += String(frame.rpm);
+  output += " flags=0x";
+  output += String(frame.flags, HEX);
   output += " supplyMv=";
   output += String(frame.supplyMv);
   output += " tempC=";

@@ -29,6 +29,10 @@ class SensorManager {
   uint8_t channelCount() const;
   float valueKpa(uint8_t channel) const;
   int16_t rawValue(uint8_t channel) const;
+  int16_t filteredValue(uint8_t channel) const;
+  float pulseHz(uint8_t channel) const;
+  uint16_t rpm() const;
+  bool rpmStable() const;
   float maxDeltaKpa() const;
   Status status() const;
   Mode mode() const;
@@ -62,6 +66,10 @@ class SensorManager {
   uint8_t payload_[sizeof(Carbtune::SensorFrame)]{};
   float valuesKpa_[MaxChannels] = {-42.0f, -40.0f, -41.0f, -44.0f, -43.0f, -45.0f};
   int16_t rawValues_[MaxChannels] = {0, 0, 0, 0, 0, 0};
+  int16_t filteredValues_[MaxChannels] = {0, 0, 0, 0, 0, 0};
+  uint16_t pulseHzCenti_[MaxChannels] = {0, 0, 0, 0, 0, 0};
+  uint16_t rpm_ = 0;
+  bool rpmStable_ = false;
   uint16_t supplyMv_ = 0;
   int16_t temperatureCentiC_ = 0;
   Mode mode_ = Mode::Demo;

@@ -40,6 +40,22 @@ int16_t SensorManager::rawValue(uint8_t channel) const {
   return channel < channelCount() ? rawValues_[channel] : 0;
 }
 
+int16_t SensorManager::filteredValue(uint8_t channel) const {
+  return channel < channelCount() ? filteredValues_[channel] : 0;
+}
+
+float SensorManager::pulseHz(uint8_t channel) const {
+  return channel < channelCount() ? pulseHzCenti_[channel] / 100.0f : 0.0f;
+}
+
+uint16_t SensorManager::rpm() const {
+  return rpm_;
+}
+
+bool SensorManager::rpmStable() const {
+  return rpmStable_;
+}
+
 float SensorManager::maxDeltaKpa() const {
   float maxDelta = 0.0f;
   for (uint8_t index = 1; index < channelCount(); ++index) {
@@ -111,7 +127,11 @@ void SensorManager::updateDemo(uint32_t nowMs) {
   valuesKpa_[5] = -45.0f + sinf(t * 0.7f + 5.0f) * 5.5f;
   for (uint8_t channel = 0; channel < MaxChannels; ++channel) {
     rawValues_[channel] = static_cast<int16_t>(map(static_cast<long>(-valuesKpa_[channel]), 0, 100, 0, 4095));
+    filteredValues_[channel] = rawValues_[channel];
+    pulseHzCenti_[channel] = channel == 0 ? 1500 : 0;
   }
+  rpm_ = 1800;
+  rpmStable_ = true;
 }
 
 void SensorManager::readUart(uint32_t nowMs) {
@@ -166,9 +186,13 @@ void SensorManager::acceptFrame(const Carbtune::SensorFrame &frame, uint32_t now
       rawValues_[channel] = 0;
       continue;
     }
-    rawValues_[channel] = frame.vacuumRaw[channel];
-    valuesKpa_[channel] = rawToKpa(frame.vacuumRaw[channel]);
+    rawValues_[channel] = frame.raw[channel];
+    filteredValues_[channel] = frame.filtered[channel];
+    pulseHzCenti_[channel] = frame.pulseHzCenti[channel];
+    valuesKpa_[channel] = rawToKpa(frame.filtered[channel]);
   }
+  rpm_ = frame.rpm;
+  rpmStable_ = (frame.flags & Carbtune::SensorFlagRpmStable) != 0;
   supplyMv_ = frame.supplyMv;
   temperatureCentiC_ = static_cast<int16_t>(frame.temperatureCentiC);
   lastFrameMs_ = nowMs;
