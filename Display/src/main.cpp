@@ -7,6 +7,7 @@
 #include "CarbtuneScreen.h"
 #include "DisplayColors.h"
 #include "SelfTest.h"
+#include "SplashScreen.h"
 #include "TouchDiagnosticsScreen.h"
 #include "TouchInput.h"
 #include "version.h"
@@ -19,8 +20,9 @@ static XPT2046_Touchscreen touch(TOUCH_CS);
 static TouchInput touchInput(touch);
 static SelfTest selfTest(*gfx, touchInput, sdSpi);
 static CarbtuneScreen carbtuneScreen(*gfx);
+static SplashScreen splashScreen(*gfx);
 static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput);
-static uint32_t selfTestShownMs = 0;
+static bool splashVisible = false;
 static bool dashboardStarted = false;
 static bool dashboardVisible = false;
 static bool diagnosticsVisible = false;
@@ -81,24 +83,33 @@ static void handleTouch(const TouchState &touchState) {
 
 void setup() {
   Serial.begin(Carbtune::UartBaud);
+  pinMode(TFT_BL, OUTPUT);
+  digitalWrite(TFT_BL, HIGH);
+  gfx->begin();
+  touchInput.begin();
 
   Serial.println();
   Serial.println(FW_NAME);
   Serial.println(FW_VERSION);
   Serial.println(FW_BUILD);
 
-  showSelfTestScreen();
-  selfTestShownMs = millis();
+  splashScreen.begin(millis());
+  splashVisible = true;
 }
 
 void loop() {
   const uint32_t nowMs = millis();
   const TouchState touchState = touchInput.update(nowMs);
 
-  if (!dashboardStarted && !dashboardVisible && !diagnosticsVisible) {
-    if (nowMs - selfTestShownMs >= 5000) {
+  if (splashVisible) {
+    if (splashScreen.update(nowMs)) {
+      splashVisible = false;
       showDashboard();
     }
+    return;
+  }
+
+  if (!dashboardStarted && !dashboardVisible && !diagnosticsVisible) {
     return;
   }
 
