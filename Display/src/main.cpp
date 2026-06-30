@@ -4,7 +4,7 @@
 #include <XPT2046_Touchscreen.h>
 #include <CarbtuneShared.h>
 #include "BoardConfig.h"
-#include "CarbtuneScreen.h"
+#include "DashboardScreen.h"
 #include "DisplayColors.h"
 #include "SelfTest.h"
 #include "SplashScreen.h"
@@ -19,7 +19,7 @@ static SPIClass sdSpi(VSPI);
 static XPT2046_Touchscreen touch(TOUCH_CS);
 static TouchInput touchInput(touch);
 static SelfTest selfTest(*gfx, touchInput, sdSpi);
-static CarbtuneScreen carbtuneScreen(*gfx);
+static DashboardScreen dashboardScreen(*gfx);
 static SplashScreen splashScreen(*gfx);
 static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput);
 static bool splashVisible = false;
@@ -34,7 +34,7 @@ static void showSelfTestScreen() {
 }
 
 static void showDashboard() {
-  carbtuneScreen.begin();
+  dashboardScreen.begin();
   dashboardStarted = true;
   dashboardVisible = true;
   diagnosticsVisible = false;
@@ -70,9 +70,9 @@ static void handleTouch(const TouchState &touchState) {
 
   if (dashboardVisible) {
     if (touchState.pressed) {
-      carbtuneScreen.showTouchStatus(touchState.screenX, touchState.screenY);
+      dashboardScreen.showTouchStatus(touchState.screenX, touchState.screenY);
     } else {
-      carbtuneScreen.showNotPressed();
+      dashboardScreen.showNotPressed();
     }
   }
 
@@ -116,6 +116,6 @@ void loop() {
   handleTouch(touchState);
 
   if (dashboardVisible) {
-    carbtuneScreen.update(nowMs);
+    dashboardScreen.update(nowMs);
   }
 }
