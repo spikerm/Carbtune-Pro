@@ -8,10 +8,10 @@ namespace UiTheme {
 static constexpr int16_t ScreenWidth = 320;
 static constexpr int16_t ScreenHeight = 240;
 
-static constexpr uint16_t Background = 0x0000;
-static constexpr uint16_t Panel = 0x0841;
-static constexpr uint16_t PanelAlt = 0x1082;
-static constexpr uint16_t Border = 0x39E7;
+static constexpr uint16_t Background = 0x0008;
+static constexpr uint16_t Panel = 0x0820;
+static constexpr uint16_t PanelAlt = 0x1041;
+static constexpr uint16_t Border = 0x31A6;
 static constexpr uint16_t Text = 0xFFFF;
 static constexpr uint16_t Muted = 0x8410;
 static constexpr uint16_t Accent = 0x04BF;

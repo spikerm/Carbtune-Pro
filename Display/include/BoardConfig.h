@@ -13,6 +13,7 @@
 #define TFT_DC   2
 #define TFT_RST  -1
 #define TFT_BL   21
+#define TFT_INVERT_COLORS 0
 
 // Touch
 #define TOUCH_IRQ   36

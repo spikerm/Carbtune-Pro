@@ -13,6 +13,7 @@
 #include "SplashScreen.h"
 #include "TouchDiagnosticsScreen.h"
 #include "TouchInput.h"
+#include "UiTheme.h"
 #include "version.h"
 
 static Arduino_DataBus *displayBus =
@@ -164,6 +165,8 @@ void setup() {
   pinMode(TFT_BL, OUTPUT);
   digitalWrite(TFT_BL, HIGH);
   gfx->begin();
+  gfx->invertDisplay(TFT_INVERT_COLORS);
+  gfx->fillScreen(UiTheme::Background);
   touchInput.begin();
 
   Serial.println();
