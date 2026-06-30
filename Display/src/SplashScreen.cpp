@@ -3,6 +3,7 @@
 #include <math.h>
 
 #include "UiTheme.h"
+#include "version.h"
 
 static constexpr uint32_t SplashDurationMs = 2000;
 
@@ -23,29 +24,41 @@ bool SplashScreen::update(uint32_t nowMs) {
 
 void SplashScreen::drawStatic() {
   display_.fillScreen(UiTheme::Background);
-  drawGauge();
-
-  display_.setTextSize(3);
-  display_.setTextColor(UiTheme::Text);
-  display_.setCursor(48, 90);
-  display_.print("CARB");
-  display_.setTextColor(UiTheme::AlarmRed);
-  display_.print("TUNE");
-
-  display_.drawFastHLine(70, 122, 58, UiTheme::AlarmRed);
-  display_.drawFastHLine(190, 122, 58, UiTheme::AlarmRed);
 
   display_.setTextSize(2);
   display_.setTextColor(UiTheme::Text);
-  display_.setCursor(134, 128);
+  display_.setCursor(58, 28);
+  display_.print("CARBTUNE");
+  display_.setCursor(126, 50);
   display_.print("PRO");
-
-  display_.setCursor(128, 162);
+  display_.setCursor(132, 74);
   display_.print("ESP32");
 
   display_.setTextSize(1);
-  display_.setCursor(116, 198);
+  display_.setCursor(94, 100);
+  display_.print("Firmware ");
+  display_.print(FW_VERSION);
+
+  display_.setCursor(112, 120);
   display_.print("INITIALIZING...");
+
+  display_.drawFastHLine(36, 136, 248, UiTheme::PanelBorder);
+  display_.setCursor(56, 148);
+  display_.setTextColor(UiTheme::GoodGreen);
+  display_.print("Display OK");
+  display_.setCursor(56, 162);
+  display_.print("Touch   OK");
+  display_.setCursor(56, 176);
+  display_.print("UART    OK");
+  display_.setCursor(56, 190);
+  display_.setTextColor(UiTheme::WarnYellow);
+  display_.print("SD      -");
+  display_.setCursor(56, 204);
+  display_.setTextColor(UiTheme::AccentBlue);
+  display_.print("Sensors DEMO");
+
+  display_.setTextColor(UiTheme::AlarmRed);
+  display_.drawFastHLine(72, 68, 176, UiTheme::AlarmRed);
 }
 
 void SplashScreen::drawGauge() {
@@ -77,6 +90,6 @@ void SplashScreen::drawProgress(uint8_t activeDots) {
   lastDots_ = activeDots;
   for (uint8_t dot = 0; dot < 7; ++dot) {
     const int16_t x = 122 + (dot * 13);
-    display_.fillCircle(x, 222, 4, dot <= activeDots ? UiTheme::AlarmRed : UiTheme::TextMuted);
+    display_.fillCircle(x, 226, 4, dot <= activeDots ? UiTheme::AlarmRed : UiTheme::TextMuted);
   }
 }
