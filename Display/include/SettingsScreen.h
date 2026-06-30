@@ -36,7 +36,7 @@ class SettingsScreen {
 
   Arduino_GFX &display_;
   SettingsManager &settings_;
-  ScrollView scrollView_{{8, 34, 304, 168}, 532};
+  ScrollView scrollView_{{8, 34, 304, 168}, 616};
   SettingsAction pendingAction_ = SettingsAction::None;
   int16_t lastOffset_ = -1;
 };

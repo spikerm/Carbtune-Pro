@@ -4,6 +4,25 @@
 
 class SettingsManager {
  public:
+  enum class DampingMode : uint8_t {
+    Low,
+    Normal,
+    High,
+  };
+
+  enum class EngineStroke : uint8_t {
+    TwoStroke = 2,
+    FourStroke = 4,
+  };
+
+  enum class RpmSource : uint8_t {
+    Ch1,
+    Ch2,
+    Ch3,
+    Ch4,
+    Auto,
+  };
+
   void begin();
 
   uint8_t cylinders() const;
@@ -17,12 +36,19 @@ class SettingsManager {
   float alarmDeltaKpa() const;
   bool demoFallback() const;
   bool liveUartEnabled() const;
+  const char *dampingName() const;
+  float dampingAlpha() const;
+  const char *engineStrokeName() const;
+  const char *rpmSourceName() const;
 
   void setAutoBrightness(bool enabled);
   void setBrightnessManualPercent(uint8_t percent);
   void setCylinders(uint8_t cylinders);
   void setDemoFallback(bool enabled);
   void toggleDemoFallback();
+  void cycleDampingMode();
+  void toggleEngineStroke();
+  void cycleRpmSource();
 
  private:
   uint8_t cylinders_ = 4;
@@ -35,4 +61,7 @@ class SettingsManager {
   float alarmDeltaKpa_ = 10.0f;
   bool demoFallback_ = true;
   bool liveUartEnabled_ = true;
+  DampingMode dampingMode_ = DampingMode::Normal;
+  EngineStroke engineStroke_ = EngineStroke::FourStroke;
+  RpmSource rpmSource_ = RpmSource::Ch1;
 };

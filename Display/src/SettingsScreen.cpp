@@ -12,7 +12,7 @@ constexpr int16_t ViewX = 8;
 constexpr int16_t ViewY = 34;
 constexpr int16_t ViewW = 304;
 constexpr int16_t ViewH = 168;
-constexpr int16_t ContentHeight = 532;
+constexpr int16_t ContentHeight = 616;
 constexpr int16_t HeaderHeight = 32;
 constexpr int16_t FooterY = 203;
 
@@ -105,7 +105,7 @@ void SettingsScreen::drawList() {
 
   drawSection("WEERGAVE", 102 - offset);
   drawRow("Auto schaal", "aan", 124 - offset);
-  drawRow("Demping/filter", "0.7 s", 152 - offset);
+  drawRow("Demping", settings_.dampingName(), 152 - offset, true);
   drawRow("Auto helderheid", "aan", 180 - offset);
   drawRow("Helderheid", "80%", 208 - offset);
 
@@ -114,12 +114,14 @@ void SettingsScreen::drawList() {
   drawRow("Sensor informatie", "UART", 300 - offset);
   drawRow("DEMO MODUS", settings_.demoFallback() ? "AAN" : "UIT", 328 - offset, true);
   drawRow("Live UART", "aan", 356 - offset);
+  drawRow("Motor", settings_.engineStrokeName(), 384 - offset, true);
+  drawRow("RPM bron", settings_.rpmSourceName(), 412 - offset, true);
 
-  drawSection("SYSTEEM", 396 - offset);
-  drawRow("Firmware", FW_VERSION, 418 - offset);
-  drawRow("Opslag (SD)", "-", 446 - offset);
-  drawRow("Diagnostics", "OPEN", 474 - offset, true);
-  drawRow("Over apparaat", "OPEN", 502 - offset, true);
+  drawSection("SYSTEEM", 452 - offset);
+  drawRow("Firmware", FW_VERSION, 474 - offset);
+  drawRow("Opslag (SD)", "-", 502 - offset);
+  drawRow("Diagnostics", "OPEN", 530 - offset, true);
+  drawRow("Over apparaat", "OPEN", 558 - offset, true);
 
   scrollView_.drawScrollbar(display_);
   lastOffset_ = offset;
@@ -182,10 +184,19 @@ void SettingsScreen::handleClick(int16_t screenX, int16_t screenY) {
     }
   } else if (contentHit(y, 272)) {
     pendingAction_ = SettingsAction::Calibration;
+  } else if (contentHit(y, 152)) {
+    settings_.cycleDampingMode();
+    drawList();
   } else if (contentHit(y, 328)) {
     settings_.toggleDemoFallback();
     drawList();
-  } else if (contentHit(y, 474)) {
+  } else if (contentHit(y, 384)) {
+    settings_.toggleEngineStroke();
+    drawList();
+  } else if (contentHit(y, 412)) {
+    settings_.cycleRpmSource();
+    drawList();
+  } else if (contentHit(y, 530)) {
     pendingAction_ = SettingsAction::Diagnostics;
   }
 }
