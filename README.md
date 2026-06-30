@@ -2,7 +2,7 @@
 
 ESP32 carbtune firmware workspace for the display and sensor node.
 
-Current firmware version: `v7.0.0-alpha2`.
+Current firmware version: `v7.0.0-alpha4`.
 
 ## Layout
 
@@ -23,9 +23,10 @@ Display/src/Storage
 Display/src/Assets
 ```
 
-The v7.0.0-alpha2 build keeps the dark dashboard and touch MENU flow, adds a
-scrollable settings list for the 320x240 display, and can use SensorNode UART
-frames with demo fallback.
+The v7.0.0-alpha4 build keeps the dark dashboard and touch MENU flow, fixes the
+demo-mode toggle, improves SD detection on the CYD board, reduces dashboard
+redraw flicker, and prepares restrictorless hose operation with filtered
+pressure and RPM diagnostics.
 
 ## Build
 
@@ -56,13 +57,30 @@ The display target uses Arduino_GFX for the TFT.
 
 - Startup splash: dark screen, firmware version, initialization checklist, then dashboard.
 - Dashboard: adaptive 2 to 6 cylinder layout, vertical meters, live/demo/no-data
-  source, CH1 reference line, max delta in the header, large status badge, MENU.
+  source, RPM, CH1 reference line, max delta in the header, large status badge,
+  MENU.
 - Settings: scrollable list, 2/3/4/5/6 cylinder selection, brightness settings,
-  calibration shortcut, navigation.
+  demo mode toggle, damping, engine stroke, RPM source, calibration shortcut,
+  navigation.
 - Graph: dark demo graph view.
 - Calibration: zero-kPa placeholder workflow.
 - Diagnostics: touch raw/mapped values, LDR/backlight diagnostics, sensor mode,
-  cylinder count, CH1 reference value, per-channel delta, and max delta.
+  cylinder count, CH1 reference value, per-channel delta, max delta, SD status,
+  raw/filtered ADC values, pulse Hz, RPM, and RPM stability.
+
+## SD Card
+
+The display initializes SD through `SdManager` after TFT setup using a separate
+SPI bus instance. Before TFT, touch, or SD SPI init, all chip-select pins are
+set high:
+
+- `TFT_CS`
+- `TOUCH_CS`
+- `SD_CS`
+
+SD starts at 4 MHz and retries once at 1 MHz. Splash and diagnostics show
+`SD OK <MB>`, `SD FAIL NO CARD`, or `SD FAIL INIT`. SD failures are logged but
+do not block display or touch.
 
 ## Cylinder Reference Mode
 
@@ -100,6 +118,27 @@ GND        -> GND
 
 The temporary raw conversion maps ADC `0..4095` to `-100..0 kPa` until pressure
 calibration is added.
+
+## Restrictorless Hose Preparation
+
+SensorNode samples ADC channels every 5 ms and sends SensorFrame packets every
+50 ms. Each frame now contains raw ADC values, IIR-filtered ADC values, pulse
+frequency per channel, RPM estimate, and status flags. Pulse detection uses a
+simple hysteresis window around the filtered value. CH1 is currently the primary
+RPM source.
+
+For four-stroke engines:
+
+```text
+RPM = pulseFrequencyHz * 120
+```
+
+If pulses are not stable, the display shows `RPM --` and diagnostics reports
+`RPM unstable`. Damping settings are prepared as runtime options:
+
+- laag: alpha `0.20`
+- normaal: alpha `0.10`
+- hoog: alpha `0.05`
 
 ## Backlight
 
