@@ -4,6 +4,7 @@
 #include <XPT2046_Touchscreen.h>
 #include <CarbtuneShared.h>
 #include "BoardConfig.h"
+#include "CarbtuneScreen.h"
 #include "DisplayColors.h"
 #include "SelfTest.h"
 #include "version.h"
@@ -14,7 +15,9 @@ static Arduino_GFX *gfx = new Arduino_ILI9341(displayBus, TFT_RST, 1);
 static SPIClass sdSpi(VSPI);
 static XPT2046_Touchscreen touch(TOUCH_CS, TOUCH_IRQ);
 static SelfTest selfTest(*gfx, touch, sdSpi);
-static uint32_t lastStatusMs = 0;
+static CarbtuneScreen carbtuneScreen(*gfx);
+static uint32_t selfTestShownMs = 0;
+static bool dashboardStarted = false;
 
 void setup() {
   Serial.begin(Carbtune::UartBaud);
@@ -25,24 +28,18 @@ void setup() {
   Serial.println(FW_BUILD);
 
   selfTest.run();
+  selfTestShownMs = millis();
 }
 
 void loop() {
-  if (millis() - lastStatusMs < 500) {
+  const uint32_t nowMs = millis();
+  if (!dashboardStarted) {
+    if (nowMs - selfTestShownMs >= 5000) {
+      carbtuneScreen.begin();
+      dashboardStarted = true;
+    }
     return;
   }
 
-  lastStatusMs = millis();
-  if (touch.touched()) {
-    const TS_Point point = touch.getPoint();
-    gfx->fillRect(0, 216, 320, 24, ColorBlack);
-    gfx->setTextColor(ColorYellow);
-    gfx->setTextSize(1);
-    gfx->setCursor(8, 224);
-    gfx->print("Touch ");
-    gfx->print(point.x);
-    gfx->print(",");
-    gfx->print(point.y);
-  }
-
+  carbtuneScreen.update(nowMs);
 }
