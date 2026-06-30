@@ -20,6 +20,7 @@ class SettingsManager {
 
   void setAutoBrightness(bool enabled);
   void setBrightnessManualPercent(uint8_t percent);
+  void setCylinders(uint8_t cylinders);
 
  private:
   uint8_t cylinders_ = 4;

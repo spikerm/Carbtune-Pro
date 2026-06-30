@@ -2,6 +2,7 @@
 
 #include <Arduino_GFX_Library.h>
 
+#include "App/SettingsManager.h"
 #include "TouchInput.h"
 #include "Widgets/ScrollView.h"
 
@@ -15,7 +16,7 @@ enum class SettingsAction {
 
 class SettingsScreen {
  public:
-  explicit SettingsScreen(Arduino_GFX &display);
+  SettingsScreen(Arduino_GFX &display, SettingsManager &settings);
 
   void begin();
   void update(uint32_t nowMs, const TouchState &touchState);
@@ -34,7 +35,8 @@ class SettingsScreen {
   void handleClick(int16_t screenX, int16_t screenY);
 
   Arduino_GFX &display_;
-  ScrollView scrollView_{{8, 34, 304, 168}, 410};
+  SettingsManager &settings_;
+  ScrollView scrollView_{{8, 34, 304, 168}, 532};
   SettingsAction pendingAction_ = SettingsAction::None;
   int16_t lastOffset_ = -1;
 };

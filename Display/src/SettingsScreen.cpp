@@ -12,7 +12,7 @@ constexpr int16_t ViewX = 8;
 constexpr int16_t ViewY = 34;
 constexpr int16_t ViewW = 304;
 constexpr int16_t ViewH = 168;
-constexpr int16_t ContentHeight = 410;
+constexpr int16_t ContentHeight = 532;
 constexpr int16_t HeaderHeight = 32;
 constexpr int16_t FooterY = 203;
 
@@ -21,7 +21,8 @@ bool contentHit(int16_t contentY, int16_t top, int16_t height = 28) {
 }
 }  // namespace
 
-SettingsScreen::SettingsScreen(Arduino_GFX &display) : display_(display) {}
+SettingsScreen::SettingsScreen(Arduino_GFX &display, SettingsManager &settings)
+    : display_(display), settings_(settings) {}
 
 void SettingsScreen::begin() {
   pendingAction_ = SettingsAction::None;
@@ -92,7 +93,14 @@ void SettingsScreen::drawList() {
   const int16_t offset = scrollView_.offset();
 
   drawSection("ALGEMEEN", 12 - offset);
-  drawRow("Aantal cilinders", "1  2  3  [4]", 34 - offset);
+  char cylinders[20];
+  snprintf(cylinders, sizeof(cylinders), "2 3 4 5 6");
+  drawRow("Aantal cilinders", cylinders, 34 - offset);
+  const int16_t selectedX = ViewX + 189 + ((settings_.cylinders() - 2) * 14);
+  const int16_t selectedY = ViewY + 34 - offset + 5;
+  if (selectedY >= ViewY && selectedY < ViewY + ViewH - 10) {
+    display_.drawRect(selectedX, selectedY, 10, 12, UiTheme::Accent);
+  }
   drawRow("Eenheden", "[kPa]  inHg", 62 - offset);
 
   drawSection("WEERGAVE", 102 - offset);
@@ -103,7 +111,7 @@ void SettingsScreen::drawList() {
 
   drawSection("SENSOREN", 250 - offset);
   drawRow("Kalibratie", "START", 272 - offset, true);
-  drawRow("Sensor informatie", "DEMO", 300 - offset);
+  drawRow("Sensor informatie", "UART", 300 - offset);
   drawRow("Demo mode", "aan", 328 - offset);
   drawRow("Live UART", "aan", 356 - offset);
 
@@ -166,7 +174,13 @@ void SettingsScreen::handleClick(int16_t screenX, int16_t screenY) {
   }
 
   const int16_t y = scrollView_.contentY(screenY);
-  if (contentHit(y, 272)) {
+  if (contentHit(y, 34)) {
+    if (screenX >= ViewX + 184 && screenX < ViewX + 270) {
+      const uint8_t selected = 2 + constrain(static_cast<int>((screenX - (ViewX + 184)) / 14), 0, 4);
+      settings_.setCylinders(selected);
+      drawList();
+    }
+  } else if (contentHit(y, 272)) {
     pendingAction_ = SettingsAction::Calibration;
   } else if (contentHit(y, 474)) {
     pendingAction_ = SettingsAction::Diagnostics;

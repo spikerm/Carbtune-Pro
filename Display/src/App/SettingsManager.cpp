@@ -53,3 +53,7 @@ void SettingsManager::setAutoBrightness(bool enabled) {
 void SettingsManager::setBrightnessManualPercent(uint8_t percent) {
   brightnessManualPercent_ = constrain(percent, 0, 100);
 }
+
+void SettingsManager::setCylinders(uint8_t cylinders) {
+  cylinders_ = constrain(cylinders, 2, 6);
+}
