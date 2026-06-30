@@ -7,6 +7,7 @@
 #include "CarbtuneScreen.h"
 #include "DisplayColors.h"
 #include "SelfTest.h"
+#include "TouchInput.h"
 #include "version.h"
 
 static Arduino_DataBus *displayBus =
@@ -14,7 +15,8 @@ static Arduino_DataBus *displayBus =
 static Arduino_GFX *gfx = new Arduino_ILI9341(displayBus, TFT_RST, 1);
 static SPIClass sdSpi(VSPI);
 static XPT2046_Touchscreen touch(TOUCH_CS, TOUCH_IRQ);
-static SelfTest selfTest(*gfx, touch, sdSpi);
+static TouchInput touchInput(touch);
+static SelfTest selfTest(*gfx, touchInput, sdSpi);
 static CarbtuneScreen carbtuneScreen(*gfx);
 static uint32_t selfTestShownMs = 0;
 static bool dashboardStarted = false;

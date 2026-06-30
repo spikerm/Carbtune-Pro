@@ -7,8 +7,8 @@
 #include "DisplayColors.h"
 #include "version.h"
 
-SelfTest::SelfTest(Arduino_GFX &display, XPT2046_Touchscreen &touch, SPIClass &sdSpi)
-    : display_(display), touch_(touch), sdSpi_(sdSpi) {}
+SelfTest::SelfTest(Arduino_GFX &display, TouchInput &touchInput, SPIClass &sdSpi)
+    : display_(display), touchInput_(touchInput), sdSpi_(sdSpi) {}
 
 void SelfTest::run() {
   resultCount_ = 0;
@@ -101,9 +101,8 @@ bool SelfTest::testTft() {
 }
 
 bool SelfTest::testTouch() {
-  SPI.begin(TOUCH_CLK, TOUCH_MISO, TOUCH_MOSI, TOUCH_CS);
-  const bool ok = touch_.begin();
-  touch_.setRotation(1);
+  const bool ok = touchInput_.begin();
+  touchInput_.update(millis());
   addResult("Touch", ok, ok ? touchDetail() : "begin failed");
   return ok;
 }
@@ -167,14 +166,10 @@ bool SelfTest::testUart() {
 }
 
 String SelfTest::touchDetail() const {
-  if (!touch_.touched()) {
+  const TouchState touch = touchInput_.current();
+  if (!touch.pressed) {
     return "not pressed";
   }
 
-  const TS_Point point = touch_.getPoint();
-  if (point.x == TOUCH_IDLE_X && point.y == TOUCH_IDLE_Y) {
-    return "not pressed";
-  }
-
-  return "raw=" + String(point.x) + "," + String(point.y);
+  return "raw=" + String(touch.rawX) + "," + String(touch.rawY);
 }
