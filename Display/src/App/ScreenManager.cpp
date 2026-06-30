@@ -57,6 +57,27 @@ void ScreenManager::update(uint32_t nowMs, const TouchState &touchState) {
     return;
   }
 
+  if (current_ == ScreenId::Settings) {
+    settings_.update(nowMs, touchState);
+    switch (settings_.takeAction()) {
+      case SettingsAction::Home:
+        show(ScreenId::Dashboard);
+        break;
+      case SettingsAction::Graph:
+        show(ScreenId::Graph);
+        break;
+      case SettingsAction::Calibration:
+        show(ScreenId::Calibration);
+        break;
+      case SettingsAction::Diagnostics:
+        show(ScreenId::Diagnostics);
+        break;
+      case SettingsAction::None:
+        break;
+    }
+    return;
+  }
+
   handleTouch(touchState);
   if (current_ == ScreenId::Dashboard) {
     dashboard_.update(nowMs);
@@ -101,13 +122,6 @@ void ScreenManager::handleTouch(const TouchState &touchState) {
       }
       break;
     case ScreenId::Settings:
-      if (settings_.isHomeHit(x, y)) {
-        show(ScreenId::Dashboard);
-      } else if (settings_.isGraphHit(x, y)) {
-        show(ScreenId::Graph);
-      } else if (settings_.isCalibrationHit(x, y)) {
-        show(ScreenId::Calibration);
-      }
       break;
     case ScreenId::Graph:
       if (graph_.isHomeHit(x, y)) {

@@ -2,75 +2,50 @@
 
 #include "UiButton.h"
 #include "UiTheme.h"
+#include "version.h"
 
 namespace {
 constexpr UiRect HomeRect{8, 205, 96, 30};
 constexpr UiRect GraphRect{112, 205, 96, 30};
 constexpr UiRect SettingsRect{216, 205, 96, 30};
-constexpr UiRect CalibrationRect{238, 176, 58, 18};
+constexpr int16_t ViewX = 8;
+constexpr int16_t ViewY = 34;
+constexpr int16_t ViewW = 304;
+constexpr int16_t ViewH = 168;
+constexpr int16_t ContentHeight = 410;
 
-void drawHeader(Arduino_GFX &display) {
-  display.fillScreen(UiTheme::Background);
-  display.fillRect(0, 0, UiTheme::ScreenWidth, 30, 0x0208);
-  display.drawLine(0, 30, UiTheme::ScreenWidth, 30, UiTheme::Border);
-  UiButton({8, 5, 32, 22}, "<").draw(display);
-  display.setTextColor(UiTheme::Text);
-  display.setTextSize(2);
-  display.setCursor(106, 8);
-  display.print("INSTELLINGEN");
-}
-
-void drawRowLabel(Arduino_GFX &display, const char *label, int16_t y) {
-  display.setTextColor(UiTheme::Text);
-  display.setTextSize(1);
-  display.setCursor(14, y);
-  display.print(label);
+bool contentHit(int16_t contentY, int16_t top, int16_t height = 28) {
+  return contentY >= top && contentY < top + height;
 }
 }  // namespace
 
 SettingsScreen::SettingsScreen(Arduino_GFX &display) : display_(display) {}
 
 void SettingsScreen::begin() {
-  drawHeader(display_);
+  pendingAction_ = SettingsAction::None;
+  scrollView_.begin();
+  scrollView_.setContentHeight(ContentHeight);
+  lastOffset_ = -1;
+  display_.fillScreen(UiTheme::Background);
+  drawHeader();
+  drawFooter();
+  drawList();
+}
 
-  UiTheme::drawPanel(display_, 8, 36, 304, 157);
-  drawRowLabel(display_, "AANTAL CILINDERS", 48);
-  UiButton({14, 64, 50, 26}, "1").draw(display_);
-  UiButton({78, 64, 50, 26}, "2").draw(display_);
-  UiButton({142, 64, 50, 26}, "3").draw(display_);
-  UiButton({206, 64, 50, 26}, "4").draw(display_, true);
+void SettingsScreen::update(uint32_t nowMs, const TouchState &touchState) {
+  scrollView_.update(nowMs, touchState);
+  if (scrollView_.offset() != lastOffset_) {
+    drawList();
+  }
+  if (scrollView_.wasClickReleased()) {
+    handleClick(scrollView_.clickX(), scrollView_.clickY());
+  }
+}
 
-  display_.drawLine(8, 98, 312, 98, UiTheme::Border);
-  drawRowLabel(display_, "EENHEDEN", 107);
-  UiButton({176, 102, 58, 22}, "kPa").draw(display_, true);
-  UiButton({238, 102, 58, 22}, "inHg").draw(display_);
-
-  display_.drawLine(8, 130, 312, 130, UiTheme::Border);
-  drawRowLabel(display_, "AUTO SCHAAL", 139);
-  display_.fillRoundRect(266, 134, 32, 17, 8, UiTheme::Good);
-  display_.fillCircle(289, 142, 7, UiTheme::Text);
-
-  display_.drawLine(8, 154, 312, 154, UiTheme::Border);
-  drawRowLabel(display_, "DEMPING / FILTER", 160);
-  display_.setCursor(246, 160);
-  display_.print("0.7 s");
-  display_.setCursor(290, 160);
-  display_.print(">");
-
-  display_.drawLine(8, 172, 312, 172, UiTheme::Border);
-  drawRowLabel(display_, "AUTO HELDERHEID", 178);
-  display_.fillRoundRect(184, 174, 32, 17, 8, UiTheme::Good);
-  display_.fillCircle(207, 182, 7, UiTheme::Text);
-  drawRowLabel(display_, "HELDERHEID", 191);
-  display_.setCursor(184, 191);
-  display_.print("80%");
-
-  drawRowLabel(display_, "KALIBRATIE", 202);
-  UiButton(CalibrationRect, "START").draw(display_);
-
-  UiButton(HomeRect, "HOME").draw(display_);
-  UiButton(GraphRect, "GRAFIEK").draw(display_);
-  UiButton(SettingsRect, "INSTELLINGEN").draw(display_, true);
+SettingsAction SettingsScreen::takeAction() {
+  const SettingsAction action = pendingAction_;
+  pendingAction_ = SettingsAction::None;
+  return action;
 }
 
 bool SettingsScreen::isHomeHit(int16_t x, int16_t y) const {
@@ -86,5 +61,111 @@ bool SettingsScreen::isSettingsHit(int16_t x, int16_t y) const {
 }
 
 bool SettingsScreen::isCalibrationHit(int16_t x, int16_t y) const {
-  return UiButton(CalibrationRect, "").contains(x, y);
+  const int16_t contentY = scrollView_.contentY(y);
+  return scrollView_.contains(x, y) && contentHit(contentY, 236);
+}
+
+void SettingsScreen::drawHeader() {
+  display_.fillRect(0, 0, UiTheme::ScreenWidth, 32, UiTheme::Background);
+  display_.drawLine(0, 31, UiTheme::ScreenWidth, 31, UiTheme::Border);
+  UiButton({8, 5, 32, 22}, "<").draw(display_);
+  display_.setTextColor(UiTheme::Text);
+  display_.setTextSize(2);
+  display_.setCursor(94, 8);
+  display_.print("INSTELLINGEN");
+}
+
+void SettingsScreen::drawFooter() {
+  display_.fillRect(0, 203, UiTheme::ScreenWidth, 37, UiTheme::Background);
+  display_.drawLine(8, 203, 312, 203, UiTheme::Border);
+  UiButton(HomeRect, "HOME").draw(display_);
+  UiButton(GraphRect, "GRAFIEK").draw(display_);
+  UiButton(SettingsRect, "INSTELLINGEN").draw(display_, true);
+}
+
+void SettingsScreen::drawList() {
+  display_.fillRect(ViewX, ViewY, ViewW, ViewH, UiTheme::Background);
+  UiTheme::drawPanel(display_, ViewX, ViewY, ViewW, ViewH);
+  const int16_t offset = scrollView_.offset();
+
+  drawSection("ALGEMEEN", 12 - offset);
+  drawRow("Aantal cilinders", "1  2  3  [4]", 34 - offset);
+  drawRow("Eenheden", "[kPa]  inHg", 62 - offset);
+
+  drawSection("WEERGAVE", 102 - offset);
+  drawRow("Auto schaal", "aan", 124 - offset);
+  drawRow("Demping/filter", "0.7 s", 152 - offset);
+  drawRow("Auto helderheid", "aan", 180 - offset);
+  drawRow("Helderheid", "80%", 208 - offset);
+
+  drawSection("SENSOREN", 250 - offset);
+  drawRow("Kalibratie", "START", 272 - offset, true);
+  drawRow("Sensor informatie", "DEMO", 300 - offset);
+  drawRow("Demo mode", "aan", 328 - offset);
+  drawRow("Live UART", "aan", 356 - offset);
+
+  drawSection("SYSTEEM", 396 - offset);
+  drawRow("Firmware", FW_VERSION, 418 - offset);
+  drawRow("Opslag (SD)", "-", 446 - offset);
+  drawRow("Diagnostics", "OPEN", 474 - offset, true);
+  drawRow("Over apparaat", "OPEN", 502 - offset, true);
+
+  scrollView_.drawScrollbar(display_);
+  lastOffset_ = offset;
+}
+
+void SettingsScreen::drawSection(const char *title, int16_t y) {
+  const int16_t screenY = ViewY + y;
+  if (screenY < ViewY - 12 || screenY > ViewY + ViewH) {
+    return;
+  }
+  display_.setTextSize(1);
+  display_.setTextColor(UiTheme::Accent);
+  display_.setCursor(ViewX + 10, screenY);
+  display_.print(title);
+  display_.drawFastHLine(ViewX + 10, screenY + 12, ViewW - 28, UiTheme::Border);
+}
+
+void SettingsScreen::drawRow(const char *label, const char *value, int16_t y, bool button) {
+  const int16_t screenY = ViewY + y;
+  if (screenY < ViewY - 22 || screenY > ViewY + ViewH) {
+    return;
+  }
+
+  display_.fillRect(ViewX + 8, screenY, ViewW - 24, 24, UiTheme::Panel);
+  display_.setTextSize(1);
+  display_.setTextColor(UiTheme::Text);
+  display_.setCursor(ViewX + 14, screenY + 8);
+  display_.print(label);
+  if (button) {
+    UiButton({static_cast<int16_t>(ViewX + 220), static_cast<int16_t>(screenY + 2), 58, 20},
+             value)
+        .draw(display_);
+  } else {
+    display_.setTextColor(UiTheme::TextMuted);
+    display_.setCursor(ViewX + 190, screenY + 8);
+    display_.print(value);
+  }
+}
+
+void SettingsScreen::handleClick(int16_t screenX, int16_t screenY) {
+  if (isHomeHit(screenX, screenY)) {
+    pendingAction_ = SettingsAction::Home;
+    return;
+  }
+  if (isGraphHit(screenX, screenY)) {
+    pendingAction_ = SettingsAction::Graph;
+    return;
+  }
+
+  if (!scrollView_.contains(screenX, screenY)) {
+    return;
+  }
+
+  const int16_t y = scrollView_.contentY(screenY);
+  if (contentHit(y, 272)) {
+    pendingAction_ = SettingsAction::Calibration;
+  } else if (contentHit(y, 474)) {
+    pendingAction_ = SettingsAction::Diagnostics;
+  }
 }
