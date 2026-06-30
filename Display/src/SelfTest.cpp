@@ -41,23 +41,43 @@ void SelfTest::addResult(const char *name, bool passed, const String &detail) {
 void SelfTest::drawResults() {
   display_.fillScreen(ColorBlack);
   display_.setTextSize(2);
-  display_.setTextColor(ColorWhite);
+  display_.setTextColor(ColorCyan);
   display_.setCursor(8, 8);
-  display_.print(FW_NAME);
-  display_.setCursor(8, 30);
+  display_.print("HARDWARE SELFTEST");
+
+  display_.setTextSize(1);
+  display_.setTextColor(ColorWhite);
+  display_.setCursor(8, 32);
   display_.print(FW_VERSION);
+  display_.print("  ");
+  display_.print(FW_BUILD);
+
+  display_.setCursor(8, 44);
+  display_.print("Heap ");
+  display_.print(ESP.getFreeHeap());
+  display_.print(" B  Flash ");
+  display_.print(ESP.getFlashChipSize() / (1024 * 1024));
+  display_.print(" MB");
 
   display_.setTextSize(1);
   for (uint8_t index = 0; index < resultCount_; ++index) {
-    const int16_t y = 58 + (index * 22);
-    display_.fillCircle(14, y + 4, 5, results_[index].passed ? ColorGreen : ColorRed);
-    display_.setCursor(28, y);
-    display_.setTextColor(results_[index].passed ? ColorGreen : ColorRed);
-    display_.print(results_[index].name);
+    const int16_t y = 66 + (index * 22);
+    drawBadge(8, y - 4, results_[index].passed);
+    display_.setCursor(62, y);
     display_.setTextColor(ColorWhite);
-    display_.setCursor(116, y);
+    display_.print(results_[index].name);
+    display_.setCursor(132, y);
     display_.print(results_[index].detail);
   }
+}
+
+void SelfTest::drawBadge(int16_t x, int16_t y, bool passed) {
+  const uint16_t color = passed ? ColorGreen : ColorRed;
+  display_.fillRoundRect(x, y, 45, 16, 2, color);
+  display_.drawRoundRect(x, y, 45, 16, 2, ColorWhite);
+  display_.setTextColor(ColorBlack);
+  display_.setCursor(x + 8, y + 4);
+  display_.print(passed ? "PASS" : "FAIL");
 }
 
 void SelfTest::setRgb(bool red, bool green, bool blue) {
@@ -84,7 +104,7 @@ bool SelfTest::testTouch() {
   SPI.begin(TOUCH_CLK, TOUCH_MISO, TOUCH_MOSI, TOUCH_CS);
   const bool ok = touch_.begin();
   touch_.setRotation(1);
-  addResult("Touch", ok, ok ? "XPT2046 ready" : "begin failed");
+  addResult("Touch", ok, ok ? touchDetail() : "begin failed");
   return ok;
 }
 
@@ -133,7 +153,7 @@ bool SelfTest::testLdr() {
   pinMode(LDR_PIN, INPUT);
   const int raw = analogRead(LDR_PIN);
   const bool ok = raw >= 0 && raw <= 4095;
-  addResult("LDR", ok, String(raw));
+  addResult("LDR", ok, "raw=" + String(raw));
   return ok;
 }
 
@@ -144,4 +164,17 @@ bool SelfTest::testUart() {
   Serial2.write(static_cast<uint8_t>(Carbtune::PacketType::SelfTest));
   addResult("UART", true, "Serial2 started");
   return true;
+}
+
+String SelfTest::touchDetail() const {
+  if (!touch_.touched()) {
+    return "not pressed";
+  }
+
+  const TS_Point point = touch_.getPoint();
+  if (point.x == TOUCH_IDLE_X && point.y == TOUCH_IDLE_Y) {
+    return "not pressed";
+  }
+
+  return "raw=" + String(point.x) + "," + String(point.y);
 }

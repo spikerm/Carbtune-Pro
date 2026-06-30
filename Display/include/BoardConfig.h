@@ -20,6 +20,8 @@
 #define TOUCH_MISO  39
 #define TOUCH_CLK   25
 #define TOUCH_CS    33
+#define TOUCH_IDLE_X 8191
+#define TOUCH_IDLE_Y 8191
 
 // SD
 #define SD_MISO 19
