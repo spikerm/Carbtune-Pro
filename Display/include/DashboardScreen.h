@@ -33,10 +33,12 @@ class DashboardScreen {
   int16_t lastValueTenths_[SensorManager::MaxChannels] = {-32768, -32768, -32768,
                                                           -32768, -32768, -32768};
   int16_t lastDiffTenths_ = -32768;
+  int16_t lastRefY_ = -32768;
   SensorManager::Mode lastMode_ = SensorManager::Mode::NoData;
   SensorManager::Status lastStatus_ = SensorManager::Status::Warning;
   int16_t lastTouchX_ = -2;
   int16_t lastTouchY_ = -2;
   uint8_t cylinderCount_ = 4;
   uint32_t lastUpdateMs_ = 0;
+  bool needsFullRedraw_ = true;
 };

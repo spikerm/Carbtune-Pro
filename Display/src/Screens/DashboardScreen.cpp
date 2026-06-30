@@ -28,13 +28,16 @@ void DashboardScreen::begin() {
     lastValueTenths_[index] = -32768;
   }
   lastDiffTenths_ = -32768;
+  lastRefY_ = -32768;
   lastMode_ = SensorManager::Mode::NoData;
   lastStatus_ = SensorManager::Status::Warning;
   lastTouchX_ = -2;
   lastTouchY_ = -2;
   lastUpdateMs_ = 0;
   cylinderCount_ = sensorManager_.channelCount();
+  needsFullRedraw_ = true;
   drawStatic();
+  needsFullRedraw_ = false;
   update(millis());
 }
 
@@ -44,28 +47,37 @@ void DashboardScreen::update(uint32_t nowMs) {
   }
 
   lastUpdateMs_ = nowMs;
-  cylinderCount_ = sensorManager_.channelCount();
+  const uint8_t newCylinderCount = sensorManager_.channelCount();
   for (uint8_t index = 0; index < SensorManager::MaxChannels; ++index) {
     valuesKpa_[index] = sensorManager_.valueKpa(index);
   }
 
-  drawHeader(false);
-  display_.fillRect(PanelX + 1, PanelY + 1, PanelW - 2, PanelH - 2, UiTheme::Panel);
-
-  const int16_t panelWidth = PanelW / cylinderCount_;
-  const int16_t startX = PanelX + ((PanelW - (panelWidth * cylinderCount_)) / 2);
-  for (uint8_t index = 0; index < cylinderCount_; ++index) {
-    drawCylinder(index, startX + (index * panelWidth), PanelY, panelWidth, true);
+  if (newCylinderCount != cylinderCount_) {
+    cylinderCount_ = newCylinderCount;
+    needsFullRedraw_ = true;
   }
+  if (needsFullRedraw_) {
+    drawStatic();
+    needsFullRedraw_ = false;
+  }
+
+  drawHeader(false);
 
   const int16_t refY =
       MeterTop + MeterHeight -
       constrain(static_cast<int16_t>((-valuesKpa_[0]) * MeterHeight / 100.0f), 0, MeterHeight);
-  display_.drawFastHLine(PanelX + 12, refY, PanelW - 24, UiTheme::AccentBlue);
-  display_.setTextSize(1);
-  display_.setTextColor(UiTheme::AccentBlue);
-  display_.setCursor(PanelX + 12, max<int16_t>(PanelY + 4, refY - 10));
-  display_.print("REF CH1");
+  if (refY != lastRefY_) {
+    for (uint8_t index = 0; index < SensorManager::MaxChannels; ++index) {
+      lastValueTenths_[index] = -32768;
+    }
+    lastRefY_ = refY;
+  }
+
+  const int16_t panelWidth = PanelW / cylinderCount_;
+  const int16_t startX = PanelX + ((PanelW - (panelWidth * cylinderCount_)) / 2);
+  for (uint8_t index = 0; index < cylinderCount_; ++index) {
+    drawCylinder(index, startX + (index * panelWidth), PanelY, panelWidth, false);
+  }
 
   drawBottomBar(false);
 }
@@ -96,6 +108,15 @@ void DashboardScreen::drawStatic() {
   display_.fillScreen(UiTheme::Background);
   drawHeader(true);
   UiTheme::drawPanel(display_, PanelX, PanelY, PanelW, PanelH);
+  display_.setTextSize(1);
+  display_.setTextColor(UiTheme::AccentBlue);
+  display_.setCursor(PanelX + 12, PanelY + 6);
+  display_.print("REF CH1");
+  const int16_t panelWidth = PanelW / cylinderCount_;
+  const int16_t startX = PanelX + ((PanelW - (panelWidth * cylinderCount_)) / 2);
+  for (uint8_t index = 0; index < cylinderCount_; ++index) {
+    drawCylinder(index, startX + (index * panelWidth), PanelY, panelWidth, true);
+  }
   drawBottomBar(true);
 }
 
@@ -151,36 +172,46 @@ void DashboardScreen::drawCylinder(uint8_t index, int16_t x, int16_t y, int16_t 
       constrain(static_cast<int16_t>((-valuesKpa_[index]) * MeterHeight / 100.0f), 0, MeterHeight);
   const int16_t fillY = MeterTop + MeterHeight - fillHeight;
 
-  display_.fillRect(x + 2, y + 4, w - 4, PanelH - 8, UiTheme::Panel);
-  display_.setTextColor(UiTheme::Text);
-  display_.setTextSize(compact ? 1 : 2);
-  display_.setCursor(center - (compact ? 3 : 6), y + 8);
-  display_.print(index + 1);
-  display_.setTextSize(1);
-  display_.setCursor(center - 10, y + 47);
-  display_.print("kPa");
+  if (force) {
+    display_.fillRect(x + 2, y + 4, w - 4, PanelH - 8, UiTheme::Panel);
+    display_.setTextColor(UiTheme::Text);
+    display_.setTextSize(compact ? 1 : 2);
+    display_.setCursor(center - (compact ? 3 : 6), y + 8);
+    display_.print(index + 1);
+    display_.setTextSize(1);
+    display_.setCursor(center - 10, y + 47);
+    display_.print("kPa");
 
-  display_.setTextColor(UiTheme::Text);
-  display_.setCursor(meterX - 18, MeterTop);
-  display_.print("0");
-  if (!compact) {
-    display_.setCursor(meterX - 24, MeterTop + 28);
-    display_.print("-50");
+    display_.setTextColor(UiTheme::Text);
+    display_.setCursor(meterX - 18, MeterTop);
+    display_.print("0");
+    if (!compact) {
+      display_.setCursor(meterX - 24, MeterTop + 28);
+      display_.print("-50");
+    }
+    display_.setCursor(meterX - (compact ? 18 : 30), MeterTop + 54);
+    display_.print("-100");
+    display_.drawRoundRect(center - (compact ? 22 : 28), y + 124, compact ? 44 : 56, 18, 3,
+                           UiTheme::PanelBorder);
   }
-  display_.setCursor(meterX - (compact ? 18 : 30), MeterTop + 54);
-  display_.print("-100");
+
+  display_.fillRect(center - (compact ? 17 : 23), y + (compact ? 30 : 28),
+                    compact ? 34 : 46, compact ? 8 : 16, UiTheme::Panel);
+  display_.fillRect(meterX + 1, MeterTop + 1, meterW, MeterHeight - 2, UiTheme::Background);
+  display_.fillRect(center - (compact ? 21 : 27), y + 128, compact ? 42 : 54, 22, UiTheme::Panel);
+
   display_.drawRect(meterX, MeterTop, meterW + 2, MeterHeight, UiTheme::PanelBorder);
-  display_.drawRoundRect(center - (compact ? 22 : 28), y + 124, compact ? 44 : 56, 18, 3,
-                         UiTheme::PanelBorder);
 
   display_.setTextColor(UiTheme::Text);
   display_.setTextSize(compact ? 1 : 2);
   display_.setCursor(center - (compact ? 14 : 22), y + (compact ? 30 : 28));
   display_.print(valuesKpa_[index], 0);
 
-  display_.fillRect(meterX + 1, MeterTop + 1, meterW, MeterHeight - 2, UiTheme::Background);
   display_.fillRect(meterX + 1, fillY, meterW, fillHeight, meterColor);
   display_.drawFastHLine(meterX - 3, fillY, meterW + 8, UiTheme::Text);
+  if (lastRefY_ >= MeterTop && lastRefY_ <= MeterTop + MeterHeight) {
+    display_.drawFastHLine(meterX - 3, lastRefY_, meterW + 8, UiTheme::AccentBlue);
+  }
 
   display_.setTextSize(1);
   display_.setTextColor(UiTheme::Text);
