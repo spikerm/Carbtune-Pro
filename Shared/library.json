@@ -1,6 +1,6 @@
 {
   "name": "CarbtuneShared",
-  "version": "6.5.3-alpha1",
+  "version": "6.6.0-alpha1",
   "description": "Shared protocol and version helpers for Carbtune Pro Display and SensorNode firmware.",
   "keywords": ["carbtune", "esp32", "uart", "protocol"],
   "authors": [{ "name": "spikerm" }],

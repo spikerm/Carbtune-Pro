@@ -2,7 +2,7 @@
 
 ESP32 carbtune firmware workspace for the display and sensor node.
 
-Current firmware version: `v6.5.3-alpha1`.
+Current firmware version: `v6.6.0-alpha1`.
 
 ## Layout
 
@@ -25,8 +25,38 @@ The display target uses Arduino_GFX for the TFT.
 Display upload/monitor port: `COM14`.
 SensorNode upload/monitor port: `COM9`.
 
-On the ESP32-2432S028R display, the firmware shows the hardware selftest for
-5 seconds, then opens the first Carbtune dashboard with demo channel data.
+On the ESP32-2432S028R display, the firmware shows a dark Carbtune splash
+screen for about 2.5 seconds, then opens the Carbtune ESP32 dashboard with demo
+channel data.
+
+## Display UI
+
+The v6.6 display UI uses a dark 320x240 layout with white text, blue controls,
+green normal meters, and yellow/red warning states.
+
+- Splash screen: `CARBTUNE PRO ESP32` with initializing progress indicator.
+- Dashboard: 2- or 4-cylinder meter layout, kPa values, max difference,
+  status, and a `MENU` button.
+- Settings: cylinder count, units, auto scale, damping/filter, calibration
+  start, about row, and bottom navigation.
+- Graph: 60 second demo history with four colored traces and range controls.
+- Calibration: zero-kPa instruction screen with current pressure and START.
+- Diagnostics: live XPT2046 touch raw/mapped values and controller state.
+
+Touch is still being debugged, so every screen can also be selected from the
+display serial monitor:
+
+```text
+h = home/dashboard
+s = settings
+g = graph
+c = calibration
+d = touch diagnostics
+```
+
+When touch is available, `MENU` opens settings. The settings bottom navigation
+can return HOME or open GRAFIEK, and the calibration row opens the zero-kPa
+calibration screen.
 
 ## Touch Diagnostics And Calibration
 
@@ -38,10 +68,9 @@ valid readings to the 320x240 screen, and logs touches on the serial monitor:
 Touch raw=1234,2345 mapped=82,137 pressed
 ```
 
-Tap `MENU` on the dashboard to open the touch diagnostics screen. Tap `MENU`
-again to return to the dashboard. The diagnostics screen shows raw X/Y,
-pressure Z, mapped screen X/Y, pressed state, long-press state, IRQ pin state,
-and the active touch controller.
+Send `d` in `pio device monitor -e display` to open the touch diagnostics
+screen. It shows raw X/Y, pressure Z, mapped screen X/Y, pressed state,
+long-press state, IRQ pin state, and the active touch controller.
 
 To tune a different panel, open `Display/include/BoardConfig.h` and adjust:
 
