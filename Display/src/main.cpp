@@ -4,10 +4,12 @@
 #include <XPT2046_Touchscreen.h>
 #include <CarbtuneShared.h>
 #include "BoardConfig.h"
+#include "App/SettingsManager.h"
 #include "CalibrationScreen.h"
 #include "DashboardScreen.h"
 #include "DisplayColors.h"
 #include "GraphScreen.h"
+#include "Sensors/BacklightManager.h"
 #include "SelfTest.h"
 #include "SettingsScreen.h"
 #include "SplashScreen.h"
@@ -21,6 +23,8 @@ static Arduino_DataBus *displayBus =
 static Arduino_GFX *gfx = new Arduino_ILI9341(displayBus, TFT_RST, 1);
 static SPIClass sdSpi(VSPI);
 static XPT2046_Touchscreen touch(TOUCH_CS);
+static SettingsManager settingsManager;
+static BacklightManager backlightManager(settingsManager);
 static TouchInput touchInput(touch);
 static SelfTest selfTest(*gfx, touchInput, sdSpi);
 static CalibrationScreen calibrationScreen(*gfx);
@@ -178,8 +182,8 @@ static void handleTouch(const TouchState &touchState) {
 
 void setup() {
   Serial.begin(Carbtune::UartBaud);
-  pinMode(TFT_BL, OUTPUT);
-  digitalWrite(TFT_BL, HIGH);
+  settingsManager.begin();
+  backlightManager.begin();
   gfx->begin();
   gfx->invertDisplay(TFT_INVERT_COLORS);
   gfx->fillScreen(UiTheme::Background);
@@ -197,6 +201,7 @@ void setup() {
 
 void loop() {
   const uint32_t nowMs = millis();
+  backlightManager.update(nowMs);
   const TouchState touchState = touchInput.update(nowMs);
 
   if (splashVisible) {
