@@ -7,7 +7,8 @@
 
 static constexpr uint32_t SplashDurationMs = 2000;
 
-SplashScreen::SplashScreen(Arduino_GFX &display) : display_(display) {}
+SplashScreen::SplashScreen(Arduino_GFX &display, SdManager &sdManager)
+    : display_(display), sdManager_(sdManager) {}
 
 void SplashScreen::begin(uint32_t nowMs) {
   startedMs_ = nowMs;
@@ -51,8 +52,8 @@ void SplashScreen::drawStatic() {
   display_.setCursor(56, 176);
   display_.print("UART    OK");
   display_.setCursor(56, 190);
-  display_.setTextColor(UiTheme::WarnYellow);
-  display_.print("SD      -");
+  display_.setTextColor(sdManager_.mounted() ? UiTheme::GoodGreen : UiTheme::WarnYellow);
+  display_.print(sdManager_.statusText());
   display_.setCursor(56, 204);
   display_.setTextColor(UiTheme::AccentBlue);
   display_.print("Sensors DEMO");

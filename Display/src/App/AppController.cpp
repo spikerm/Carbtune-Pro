@@ -8,19 +8,27 @@
 
 AppController::AppController(Arduino_GFX &display, TouchInput &touchInput,
                              BacklightManager &backlightManager, SensorManager &sensorManager,
-                             ScreenManager &screenManager)
+                             SdManager &sdManager, ScreenManager &screenManager)
     : display_(display),
       touchInput_(touchInput),
       backlightManager_(backlightManager),
       sensorManager_(sensorManager),
+      sdManager_(sdManager),
       screenManager_(screenManager) {}
 
 void AppController::begin() {
   Serial.begin(Carbtune::UartBaud);
   backlightManager_.begin();
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TOUCH_CS, OUTPUT);
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(TOUCH_CS, HIGH);
+  digitalWrite(SD_CS, HIGH);
   display_.begin();
   display_.invertDisplay(TFT_INVERT_COLORS);
   display_.fillScreen(UiTheme::Background);
+  sdManager_.begin();
   touchInput_.begin();
   sensorManager_.begin();
 

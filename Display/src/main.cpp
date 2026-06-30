@@ -13,6 +13,7 @@
 #include "Sensors/SensorManager.h"
 #include "SettingsScreen.h"
 #include "SplashScreen.h"
+#include "Storage/SdManager.h"
 #include "TouchDiagnosticsScreen.h"
 #include "TouchInput.h"
 
@@ -24,16 +25,19 @@ static XPT2046_Touchscreen touch(TOUCH_CS);
 static SettingsManager settingsManager;
 static BacklightManager backlightManager(settingsManager);
 static SensorManager sensorManager(settingsManager);
+static SdManager sdManager;
 static TouchInput touchInput(touch);
 static CalibrationScreen calibrationScreen(*gfx);
 static DashboardScreen dashboardScreen(*gfx, sensorManager);
 static GraphScreen graphScreen(*gfx);
 static SettingsScreen settingsScreen(*gfx, settingsManager);
-static SplashScreen splashScreen(*gfx);
-static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput, backlightManager, sensorManager);
+static SplashScreen splashScreen(*gfx, sdManager);
+static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput, backlightManager, sensorManager,
+                                                     sdManager);
 static ScreenManager screenManager(splashScreen, dashboardScreen, settingsScreen, graphScreen,
                                    calibrationScreen, touchDiagnosticsScreen, touchInput);
-static AppController appController(*gfx, touchInput, backlightManager, sensorManager, screenManager);
+static AppController appController(*gfx, touchInput, backlightManager, sensorManager, sdManager,
+                                   screenManager);
 
 void setup() {
   settingsManager.begin();

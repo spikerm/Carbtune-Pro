@@ -11,11 +11,12 @@ static constexpr int16_t MenuHeight = 20;
 
 TouchDiagnosticsScreen::TouchDiagnosticsScreen(Arduino_GFX &display, TouchInput &touchInput,
                                                BacklightManager &backlightManager,
-                                               SensorManager &sensorManager)
+                                               SensorManager &sensorManager, SdManager &sdManager)
     : display_(display),
       touchInput_(touchInput),
       backlightManager_(backlightManager),
-      sensorManager_(sensorManager) {}
+      sensorManager_(sensorManager),
+      sdManager_(sdManager) {}
 
 void TouchDiagnosticsScreen::begin() {
   firstDraw_ = true;
@@ -68,6 +69,11 @@ void TouchDiagnosticsScreen::update(const TouchState &touchState) {
   drawRow("CH deltas", deltas, 52 + (RowHeight * 14), true);
   drawRow("max delta", String(sensorManager_.maxDeltaKpa(), 1) + " kPa", 52 + (RowHeight * 15), true);
   drawRow("sensor mode", sensorManager_.modeName(), 52 + (RowHeight * 16), true);
+  drawRow("SD mounted", sdManager_.mounted() ? "true" : "false", 52 + (RowHeight * 17), true);
+  drawRow("SD type", sdManager_.cardTypeName(), 52 + (RowHeight * 18), true);
+  drawRow("SD size", String(sdManager_.cardSizeMb()) + " MB", 52 + (RowHeight * 19), true);
+  drawRow("SD error", sdManager_.lastErrorName(), 52 + (RowHeight * 20), true);
+  drawRow("SD attempts", String(sdManager_.initAttempts()), 52 + (RowHeight * 21), true);
 
   lastState_ = touchState;
   lastLdrRaw_ = ldrRaw;

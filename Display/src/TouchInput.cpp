@@ -12,6 +12,12 @@ static constexpr uint16_t TouchMinPressure = 1;
 TouchInput::TouchInput(XPT2046_Touchscreen &touch) : touch_(touch) {}
 
 bool TouchInput::begin() {
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TOUCH_CS, OUTPUT);
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(TOUCH_CS, HIGH);
+  digitalWrite(SD_CS, HIGH);
   SPI.begin(TOUCH_CLK, TOUCH_MISO, TOUCH_MOSI, TOUCH_CS);
   if (TOUCH_IRQ >= 0) {
     pinMode(TOUCH_IRQ, INPUT);

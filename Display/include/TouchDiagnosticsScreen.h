@@ -5,12 +5,14 @@
 
 #include "Sensors/BacklightManager.h"
 #include "Sensors/SensorManager.h"
+#include "Storage/SdManager.h"
 #include "TouchInput.h"
 
 class TouchDiagnosticsScreen {
  public:
   TouchDiagnosticsScreen(Arduino_GFX &display, TouchInput &touchInput,
-                         BacklightManager &backlightManager, SensorManager &sensorManager);
+                         BacklightManager &backlightManager, SensorManager &sensorManager,
+                         SdManager &sdManager);
 
   void begin();
   void update(const TouchState &touchState);
@@ -24,6 +26,7 @@ class TouchDiagnosticsScreen {
   TouchInput &touchInput_;
   BacklightManager &backlightManager_;
   SensorManager &sensorManager_;
+  SdManager &sdManager_;
   TouchState lastState_;
   uint16_t lastLdrRaw_ = 65535;
   int16_t lastFilteredLight_ = -1;
