@@ -32,7 +32,7 @@ static DashboardScreen dashboardScreen(*gfx);
 static GraphScreen graphScreen(*gfx);
 static SettingsScreen settingsScreen(*gfx);
 static SplashScreen splashScreen(*gfx);
-static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput);
+static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput, backlightManager);
 
 enum class ScreenId {
   Splash,

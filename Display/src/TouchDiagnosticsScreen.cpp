@@ -3,23 +3,27 @@
 #include "DisplayColors.h"
 
 static constexpr int16_t ValueX = 126;
-static constexpr int16_t RowHeight = 18;
+static constexpr int16_t RowHeight = 14;
 static constexpr int16_t MenuX = 8;
 static constexpr int16_t MenuY = 218;
 static constexpr int16_t MenuWidth = 76;
 static constexpr int16_t MenuHeight = 20;
 
-TouchDiagnosticsScreen::TouchDiagnosticsScreen(Arduino_GFX &display, TouchInput &touchInput)
-    : display_(display), touchInput_(touchInput) {}
+TouchDiagnosticsScreen::TouchDiagnosticsScreen(Arduino_GFX &display, TouchInput &touchInput,
+                                               BacklightManager &backlightManager)
+    : display_(display), touchInput_(touchInput), backlightManager_(backlightManager) {}
 
 void TouchDiagnosticsScreen::begin() {
   firstDraw_ = true;
   lastState_ = {};
+  lastLdrRaw_ = 65535;
+  lastFilteredLight_ = -1;
+  lastBrightnessPercent_ = 255;
   drawStatic();
 }
 
 void TouchDiagnosticsScreen::update(const TouchState &touchState) {
-  drawRow("raw X", String(touchState.rawX), 54, firstDraw_ || touchState.rawX != lastState_.rawX);
+  drawRow("raw X", String(touchState.rawX), 52, firstDraw_ || touchState.rawX != lastState_.rawX);
   drawRow("raw Y", String(touchState.rawY), 54 + RowHeight, firstDraw_ || touchState.rawY != lastState_.rawY);
   drawRow("pressure Z", String(touchState.rawZ), 54 + (RowHeight * 2), firstDraw_ || touchState.rawZ != lastState_.rawZ);
   drawRow("screen X", touchState.pressed ? String(touchState.screenX) : "-", 54 + (RowHeight * 3),
@@ -33,7 +37,26 @@ void TouchDiagnosticsScreen::update(const TouchState &touchState) {
   drawRow("IRQ", touchState.irqActive ? "LOW active" : "HIGH idle", 54 + (RowHeight * 7),
           firstDraw_ || touchState.irqActive != lastState_.irqActive);
 
+  const uint16_t ldrRaw = backlightManager_.ldrRaw();
+  const int16_t filteredLight = static_cast<int16_t>(backlightManager_.filteredLight());
+  const uint8_t brightnessPercent = backlightManager_.brightnessPercent();
+  const bool autoBrightness = backlightManager_.autoBrightness();
+  const bool ldrWarning = backlightManager_.ldrWarning();
+  drawRow("LDR raw", ldrWarning ? "0 / check pin" : String(ldrRaw), 54 + (RowHeight * 8),
+          firstDraw_ || ldrRaw != lastLdrRaw_ || ldrWarning != lastLdrWarning_);
+  drawRow("light filt", String(filteredLight), 54 + (RowHeight * 9),
+          firstDraw_ || filteredLight != lastFilteredLight_);
+  drawRow("backlight", String(brightnessPercent) + "%", 54 + (RowHeight * 10),
+          firstDraw_ || brightnessPercent != lastBrightnessPercent_);
+  drawRow("auto bright", autoBrightness ? "on" : "off", 54 + (RowHeight * 11),
+          firstDraw_ || autoBrightness != lastAutoBrightness_);
+
   lastState_ = touchState;
+  lastLdrRaw_ = ldrRaw;
+  lastFilteredLight_ = filteredLight;
+  lastBrightnessPercent_ = brightnessPercent;
+  lastAutoBrightness_ = autoBrightness;
+  lastLdrWarning_ = ldrWarning;
   firstDraw_ = false;
 }
 
@@ -51,7 +74,7 @@ void TouchDiagnosticsScreen::drawStatic() {
   display_.print(touchInput_.controllerName());
 
   display_.drawFastHLine(8, 48, 304, ColorDarkGrey);
-  display_.drawFastHLine(8, 206, 304, ColorDarkGrey);
+  display_.drawFastHLine(8, 222, 304, ColorDarkGrey);
   drawMenu();
 }
 
