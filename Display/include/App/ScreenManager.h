@@ -33,6 +33,10 @@ class ScreenManager {
 
  private:
   bool isDashboardMenuTarget(int16_t x, int16_t y) const;
+  bool handleGlobalTouch(int16_t x, int16_t y);
+  bool isGlobalHomeTarget(int16_t x, int16_t y) const;
+  bool isGlobalMenuTarget(int16_t x, int16_t y) const;
+  const char *screenName(ScreenId id) const;
 
   SplashScreen &splash_;
   DashboardScreen &dashboard_;

@@ -114,6 +114,10 @@ void ScreenManager::handleTouch(const TouchState &touchState) {
 
   const int16_t x = touchState.screenX;
   const int16_t y = touchState.screenY;
+  if (handleGlobalTouch(x, y)) {
+    return;
+  }
+
   switch (current_) {
     case ScreenId::Dashboard:
       dashboard_.showTouchStatus(x, y);
@@ -148,4 +152,52 @@ ScreenId ScreenManager::current() const {
 
 bool ScreenManager::isDashboardMenuTarget(int16_t x, int16_t y) const {
   return x >= 230 && x < 320 && y >= 195 && y < 240;
+}
+
+bool ScreenManager::handleGlobalTouch(int16_t x, int16_t y) {
+  if (isGlobalHomeTarget(x, y) && current_ != ScreenId::Dashboard) {
+    Serial.print("button=HOME screen=");
+    Serial.print(screenName(current_));
+    Serial.println(" action=Dashboard");
+    show(ScreenId::Dashboard);
+    return true;
+  }
+
+  if (isGlobalMenuTarget(x, y) && current_ != ScreenId::Settings) {
+    Serial.print("button=MENU screen=");
+    Serial.print(screenName(current_));
+    Serial.println(" action=Settings");
+    show(ScreenId::Settings);
+    return true;
+  }
+
+  return false;
+}
+
+bool ScreenManager::isGlobalHomeTarget(int16_t x, int16_t y) const {
+  return x >= 0 && x < 112 && y >= 195 && y < 240;
+}
+
+bool ScreenManager::isGlobalMenuTarget(int16_t x, int16_t y) const {
+  return x >= 220 && x < 320 && y >= 195 && y < 240;
+}
+
+const char *ScreenManager::screenName(ScreenId id) const {
+  switch (id) {
+    case ScreenId::Splash:
+      return "Splash";
+    case ScreenId::Dashboard:
+      return "Dashboard";
+    case ScreenId::Settings:
+      return "Settings";
+    case ScreenId::Graph:
+      return "Graph";
+    case ScreenId::Calibration:
+      return "Calibration";
+    case ScreenId::Diagnostics:
+      return "Diagnostics";
+    case ScreenId::About:
+      return "About";
+  }
+  return "Unknown";
 }

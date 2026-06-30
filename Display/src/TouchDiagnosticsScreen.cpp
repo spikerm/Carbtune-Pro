@@ -4,7 +4,8 @@
 
 static constexpr int16_t ValueX = 118;
 static constexpr int16_t RowHeight = 10;
-static constexpr int16_t MenuX = 8;
+static constexpr int16_t HomeX = 8;
+static constexpr int16_t MenuX = 236;
 static constexpr int16_t MenuY = 218;
 static constexpr int16_t MenuWidth = 76;
 static constexpr int16_t MenuHeight = 20;
@@ -118,6 +119,13 @@ void TouchDiagnosticsScreen::drawRow(const char *label, const String &value, int
 }
 
 void TouchDiagnosticsScreen::drawMenu() {
+  display_.fillRoundRect(HomeX, MenuY, MenuWidth, MenuHeight, 3, ColorDarkGrey);
+  display_.drawRoundRect(HomeX, MenuY, MenuWidth, MenuHeight, 3, ColorWhite);
+  display_.setTextSize(2);
+  display_.setTextColor(ColorWhite);
+  display_.setCursor(HomeX + 12, MenuY + 3);
+  display_.print("HOME");
+
   display_.fillRoundRect(MenuX, MenuY, MenuWidth, MenuHeight, 3, ColorYellow);
   display_.drawRoundRect(MenuX, MenuY, MenuWidth, MenuHeight, 3, ColorWhite);
   display_.setTextSize(2);
