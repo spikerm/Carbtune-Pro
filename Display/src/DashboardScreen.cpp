@@ -61,7 +61,7 @@ uint8_t DashboardScreen::cylinderCount() const {
 }
 
 bool DashboardScreen::isMenuHit(int16_t x, int16_t y) const {
-  return x >= 220 && x < 320 && y >= 196 && y < 240;
+  return x >= 230 && x < 320 && y >= 195 && y < 240;
 }
 
 void DashboardScreen::showTouchStatus(int16_t x, int16_t y) {

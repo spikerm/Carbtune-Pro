@@ -12,9 +12,11 @@ static constexpr uint16_t TouchMinPressure = 1;
 TouchInput::TouchInput(XPT2046_Touchscreen &touch) : touch_(touch) {}
 
 bool TouchInput::begin() {
-  pinMode(TOUCH_IRQ, INPUT);
-  const bool ok = touch_.begin();
   SPI.begin(TOUCH_CLK, TOUCH_MISO, TOUCH_MOSI, TOUCH_CS);
+  if (TOUCH_IRQ >= 0) {
+    pinMode(TOUCH_IRQ, INPUT);
+  }
+  const bool ok = touch_.begin();
   touch_.setRotation(1);
   return ok;
 }
@@ -61,7 +63,7 @@ TouchState TouchInput::update(uint32_t nowMs) {
                    sample.screenY != state_.screenY ||
                    sample.irqActive != state_.irqActive;
 
-  if (sample.changed && sample.pressed) {
+  if (sample.changed) {
     logState(sample);
   }
 
@@ -97,7 +99,7 @@ TouchState TouchInput::readRaw() const {
   raw.rawX = point.x;
   raw.rawY = point.y;
   raw.rawZ = point.z;
-  raw.irqActive = digitalRead(TOUCH_IRQ) == LOW;
+  raw.irqActive = TOUCH_IRQ >= 0 && digitalRead(TOUCH_IRQ) == LOW;
   raw.pressed = isValidRaw(raw.rawX, raw.rawY, raw.rawZ);
   return raw;
 }
@@ -147,7 +149,7 @@ void TouchInput::logState(const TouchState &state) const {
   Serial.print(state.screenX);
   Serial.print(",");
   Serial.print(state.screenY);
-  Serial.print(state.longPressed ? " long-pressed" : " pressed");
+  Serial.print(state.pressed ? (state.longPressed ? " long-pressed" : " pressed") : " released");
   Serial.print(" irq=");
   Serial.println(state.irqActive ? "active" : "inactive");
 }

@@ -43,6 +43,10 @@ static ScreenId currentScreen = ScreenId::Splash;
 static bool splashVisible = false;
 static bool touchWasPressed = false;
 
+static bool isDashboardMenuTarget(int16_t x, int16_t y) {
+  return x >= 230 && x < 320 && y >= 195 && y < 240;
+}
+
 static void showSelfTestScreen() {
   selfTest.run();
   currentScreen = ScreenId::Diagnostics;
@@ -106,6 +110,18 @@ static void handleSerialInput() {
 
 static void handleTouch(const TouchState &touchState) {
   const bool touchStarted = touchState.pressed && !touchWasPressed;
+  if (touchState.changed) {
+    const bool menuHit = touchState.pressed &&
+                         isDashboardMenuTarget(touchState.screenX, touchState.screenY);
+    Serial.print("Touch mapped=");
+    Serial.print(touchState.screenX);
+    Serial.print(",");
+    Serial.print(touchState.screenY);
+    Serial.print(touchState.pressed ? " pressed" : " released");
+    Serial.print(" MENU=");
+    Serial.println(menuHit ? "yes" : "no");
+  }
+
   touchWasPressed = touchState.pressed;
 
   if (!touchStarted) {
@@ -127,7 +143,7 @@ static void handleTouch(const TouchState &touchState) {
   switch (currentScreen) {
     case ScreenId::Dashboard:
       dashboardScreen.showTouchStatus(x, y);
-      if (dashboardScreen.isMenuHit(x, y)) {
+      if (isDashboardMenuTarget(x, y)) {
         showSettings();
       }
       break;
