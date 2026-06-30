@@ -16,6 +16,8 @@ static constexpr int16_t MenuWidth = 76;
 static constexpr int16_t MenuHeight = 20;
 static constexpr int16_t TouchStatusX = 96;
 static constexpr int16_t TouchStatusY = 224;
+static constexpr int16_t DeltaY = 210;
+static constexpr int16_t ChannelY[4] = {70, 105, 140, 175};
 static constexpr float MinKpa = 0.0f;
 static constexpr float MaxKpa = 80.0f;
 
@@ -65,7 +67,7 @@ void CarbtuneScreen::drawStatic() {
   display_.print("kPa");
 
   for (uint8_t channel = 0; channel < 4; ++channel) {
-    const int16_t y = 62 + (channel * 36);
+    const int16_t y = ChannelY[channel];
     display_.setTextColor(ColorWhite);
     display_.setTextSize(2);
     display_.setCursor(12, y);
@@ -75,7 +77,7 @@ void CarbtuneScreen::drawStatic() {
     display_.drawRoundRect(BarX, y, BarWidth, BarHeight, 3, ColorWhite);
   }
 
-  display_.drawFastHLine(8, 198, ScreenWidth - 16, ColorDarkGrey);
+  display_.drawFastHLine(8, 202, ScreenWidth - 16, ColorDarkGrey);
   drawMenu();
   showNotPressed();
 }
@@ -89,7 +91,7 @@ void CarbtuneScreen::updateDemoValues(uint32_t nowMs) {
 }
 
 void CarbtuneScreen::drawChannel(uint8_t channel) {
-  const int16_t y = 62 + (channel * 36);
+  const int16_t y = ChannelY[channel];
   const float value = constrain(valuesKpa_[channel], MinKpa, MaxKpa);
   const int16_t barFill = static_cast<int16_t>((value - MinKpa) * (BarWidth - 4) / (MaxKpa - MinKpa));
   const int16_t centiKpa = static_cast<int16_t>(value * 100.0f);
@@ -125,12 +127,12 @@ void CarbtuneScreen::drawDelta() {
     return;
   }
 
-  display_.fillRect(96, 174, 150, 20, ColorBlack);
+  display_.fillRect(96, DeltaY, 156, 20, ColorBlack);
   display_.setTextSize(2);
   display_.setTextColor(ColorWhite);
-  display_.setCursor(12, 174);
+  display_.setCursor(96, DeltaY);
   display_.print("DELTA");
-  display_.setCursor(96, 174);
+  display_.setCursor(172, DeltaY);
   display_.print(delta, 1);
   display_.print(" kPa");
   lastDeltaCentiKpa_ = centiKpa;
