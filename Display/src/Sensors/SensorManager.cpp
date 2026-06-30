@@ -15,11 +15,15 @@ void SensorManager::update(uint32_t nowMs) {
     readUart(nowMs);
   }
 
-  if (mode_ == Mode::LiveUart && nowMs - lastFrameMs_ > 2000) {
-    mode_ = settings_.demoFallback() ? Mode::Demo : Mode::NoData;
+  if (mode_ == Mode::LiveUart) {
+    if (nowMs - lastFrameMs_ > 2000) {
+      mode_ = settings_.demoFallback() ? Mode::Demo : Mode::NoData;
+    }
+  } else if (!settings_.demoFallback()) {
+    mode_ = Mode::NoData;
   }
 
-  if (mode_ == Mode::Demo || (mode_ == Mode::NoData && settings_.demoFallback())) {
+  if (settings_.demoFallback() && mode_ != Mode::LiveUart) {
     updateDemo(nowMs);
   }
 }

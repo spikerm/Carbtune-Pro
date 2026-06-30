@@ -57,3 +57,11 @@ void SettingsManager::setBrightnessManualPercent(uint8_t percent) {
 void SettingsManager::setCylinders(uint8_t cylinders) {
   cylinders_ = constrain(cylinders, 2, 6);
 }
+
+void SettingsManager::setDemoFallback(bool enabled) {
+  demoFallback_ = enabled;
+}
+
+void SettingsManager::toggleDemoFallback() {
+  demoFallback_ = !demoFallback_;
+}

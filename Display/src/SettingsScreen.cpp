@@ -112,7 +112,7 @@ void SettingsScreen::drawList() {
   drawSection("SENSOREN", 250 - offset);
   drawRow("Kalibratie", "START", 272 - offset, true);
   drawRow("Sensor informatie", "UART", 300 - offset);
-  drawRow("Demo mode", "aan", 328 - offset);
+  drawRow("DEMO MODUS", settings_.demoFallback() ? "AAN" : "UIT", 328 - offset, true);
   drawRow("Live UART", "aan", 356 - offset);
 
   drawSection("SYSTEEM", 396 - offset);
@@ -182,6 +182,9 @@ void SettingsScreen::handleClick(int16_t screenX, int16_t screenY) {
     }
   } else if (contentHit(y, 272)) {
     pendingAction_ = SettingsAction::Calibration;
+  } else if (contentHit(y, 328)) {
+    settings_.toggleDemoFallback();
+    drawList();
   } else if (contentHit(y, 474)) {
     pendingAction_ = SettingsAction::Diagnostics;
   }

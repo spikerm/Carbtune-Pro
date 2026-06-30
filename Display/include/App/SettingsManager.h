@@ -21,6 +21,8 @@ class SettingsManager {
   void setAutoBrightness(bool enabled);
   void setBrightnessManualPercent(uint8_t percent);
   void setCylinders(uint8_t cylinders);
+  void setDemoFallback(bool enabled);
+  void toggleDemoFallback();
 
  private:
   uint8_t cylinders_ = 4;
