@@ -34,6 +34,8 @@ class DashboardScreen {
                                                           -32768, -32768, -32768};
   int16_t lastDiffTenths_ = -32768;
   int16_t lastRefY_ = -32768;
+  uint16_t lastRpm_ = 65535;
+  bool lastRpmStable_ = false;
   SensorManager::Mode lastMode_ = SensorManager::Mode::NoData;
   SensorManager::Status lastStatus_ = SensorManager::Status::Warning;
   int16_t lastTouchX_ = -2;

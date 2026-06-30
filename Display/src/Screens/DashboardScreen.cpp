@@ -29,6 +29,8 @@ void DashboardScreen::begin() {
   }
   lastDiffTenths_ = -32768;
   lastRefY_ = -32768;
+  lastRpm_ = 65535;
+  lastRpmStable_ = false;
   lastMode_ = SensorManager::Mode::NoData;
   lastStatus_ = SensorManager::Status::Warning;
   lastTouchX_ = -2;
@@ -124,32 +126,42 @@ void DashboardScreen::drawHeader(bool force) {
   const float diff = maxDifference();
   const int16_t diffTenths = static_cast<int16_t>(diff * 10.0f);
   const SensorManager::Mode mode = sensorManager_.mode();
-  if (!force && diffTenths == lastDiffTenths_ && mode == lastMode_) {
+  const uint16_t rpm = sensorManager_.rpm();
+  const bool rpmStable = sensorManager_.rpmStable();
+  if (!force && diffTenths == lastDiffTenths_ && mode == lastMode_ && rpm == lastRpm_ &&
+      rpmStable == lastRpmStable_) {
     return;
   }
 
   display_.fillRect(0, 0, UiTheme::ScreenWidth, HeaderH, UiTheme::Background);
   display_.drawLine(0, HeaderH - 1, UiTheme::ScreenWidth, HeaderH - 1, UiTheme::Border);
   display_.setTextSize(1);
-  display_.setTextColor(mode == SensorManager::Mode::LiveUart ? UiTheme::GoodGreen
-                                                              : UiTheme::WarnYellow);
+  display_.setTextColor(rpmStable ? UiTheme::GoodGreen : UiTheme::WarnYellow);
   display_.setCursor(10, 12);
-  display_.print(sensorManager_.modeName());
+  display_.print("RPM ");
+  if (rpmStable) {
+    display_.print(rpm);
+  } else {
+    display_.print("--");
+  }
 
   display_.setTextSize(2);
   display_.setTextColor(statusColor());
-  display_.setCursor(112, 7);
+  display_.setCursor(118, 7);
   display_.print("D ");
   display_.print(diff, 1);
   display_.print(" kPa");
 
   display_.setTextSize(1);
-  display_.setTextColor(UiTheme::Text);
-  display_.setCursor(276, 12);
-  display_.print("12:45");
+  display_.setTextColor(mode == SensorManager::Mode::LiveUart ? UiTheme::GoodGreen
+                                                              : UiTheme::WarnYellow);
+  display_.setCursor(mode == SensorManager::Mode::NoData ? 266 : 282, 12);
+  display_.print(sensorManager_.modeName());
 
   lastDiffTenths_ = diffTenths;
   lastMode_ = mode;
+  lastRpm_ = rpm;
+  lastRpmStable_ = rpmStable;
 }
 
 void DashboardScreen::drawCylinder(uint8_t index, int16_t x, int16_t y, int16_t w, bool force) {

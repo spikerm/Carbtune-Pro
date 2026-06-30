@@ -3,7 +3,7 @@
 #include "DisplayColors.h"
 
 static constexpr int16_t ValueX = 118;
-static constexpr int16_t RowHeight = 10;
+static constexpr int16_t RowHeight = 8;
 static constexpr int16_t HomeX = 8;
 static constexpr int16_t MenuX = 236;
 static constexpr int16_t MenuY = 218;
@@ -70,11 +70,24 @@ void TouchDiagnosticsScreen::update(const TouchState &touchState) {
   drawRow("CH deltas", deltas, 52 + (RowHeight * 14), true);
   drawRow("max delta", String(sensorManager_.maxDeltaKpa(), 1) + " kPa", 52 + (RowHeight * 15), true);
   drawRow("sensor mode", sensorManager_.modeName(), 52 + (RowHeight * 16), true);
-  drawRow("SD mounted", sdManager_.mounted() ? "true" : "false", 52 + (RowHeight * 17), true);
-  drawRow("SD type", sdManager_.cardTypeName(), 52 + (RowHeight * 18), true);
-  drawRow("SD size", String(sdManager_.cardSizeMb()) + " MB", 52 + (RowHeight * 19), true);
-  drawRow("SD error", sdManager_.lastErrorName(), 52 + (RowHeight * 20), true);
-  drawRow("SD attempts", String(sdManager_.initAttempts()), 52 + (RowHeight * 21), true);
+  drawRow("raw", String(sensorManager_.rawValue(0)) + "," + String(sensorManager_.rawValue(1)) + "," +
+                     String(sensorManager_.rawValue(2)) + "," + String(sensorManager_.rawValue(3)),
+          52 + (RowHeight * 17), true);
+  drawRow("filtered", String(sensorManager_.filteredValue(0)) + "," +
+                          String(sensorManager_.filteredValue(1)) + "," +
+                          String(sensorManager_.filteredValue(2)) + "," +
+                          String(sensorManager_.filteredValue(3)),
+          52 + (RowHeight * 18), true);
+  drawRow("pulse Hz", String(sensorManager_.pulseHz(0), 1), 52 + (RowHeight * 19), true);
+  drawRow("RPM", sensorManager_.rpmStable() ? String(sensorManager_.rpm()) : "--",
+          52 + (RowHeight * 20), true);
+  drawRow("RPM status", sensorManager_.rpmStable() ? "stable" : "unstable",
+          52 + (RowHeight * 21), true);
+  drawRow("SD mounted", sdManager_.mounted() ? "true" : "false", 52 + (RowHeight * 22), true);
+  drawRow("SD type", sdManager_.cardTypeName(), 52 + (RowHeight * 23), true);
+  drawRow("SD size", String(sdManager_.cardSizeMb()) + " MB", 52 + (RowHeight * 24), true);
+  drawRow("SD error", sdManager_.lastErrorName(), 52 + (RowHeight * 25), true);
+  drawRow("SD attempts", String(sdManager_.initAttempts()), 52 + (RowHeight * 26), true);
 
   lastState_ = touchState;
   lastLdrRaw_ = ldrRaw;
@@ -108,7 +121,7 @@ void TouchDiagnosticsScreen::drawRow(const char *label, const String &value, int
     return;
   }
 
-  display_.fillRect(ValueX, y, 190, 9, ColorBlack);
+  display_.fillRect(ValueX, y, 190, 8, ColorBlack);
   display_.setTextSize(1);
   display_.setTextColor(ColorDarkGrey);
   display_.setCursor(12, y);
