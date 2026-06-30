@@ -4,9 +4,12 @@
 #include <XPT2046_Touchscreen.h>
 #include <CarbtuneShared.h>
 #include "BoardConfig.h"
+#include "CalibrationScreen.h"
 #include "DashboardScreen.h"
 #include "DisplayColors.h"
+#include "GraphScreen.h"
 #include "SelfTest.h"
+#include "SettingsScreen.h"
 #include "SplashScreen.h"
 #include "TouchDiagnosticsScreen.h"
 #include "TouchInput.h"
@@ -19,65 +22,140 @@ static SPIClass sdSpi(VSPI);
 static XPT2046_Touchscreen touch(TOUCH_CS);
 static TouchInput touchInput(touch);
 static SelfTest selfTest(*gfx, touchInput, sdSpi);
+static CalibrationScreen calibrationScreen(*gfx);
 static DashboardScreen dashboardScreen(*gfx);
+static GraphScreen graphScreen(*gfx);
+static SettingsScreen settingsScreen(*gfx);
 static SplashScreen splashScreen(*gfx);
 static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput);
+
+enum class ScreenId {
+  Splash,
+  Dashboard,
+  Settings,
+  Graph,
+  Calibration,
+  Diagnostics,
+};
+
+static ScreenId currentScreen = ScreenId::Splash;
 static bool splashVisible = false;
-static bool dashboardStarted = false;
-static bool dashboardVisible = false;
-static bool diagnosticsVisible = false;
-static bool menuWasPressed = false;
+static bool touchWasPressed = false;
 
 static void showSelfTestScreen() {
   selfTest.run();
-  dashboardVisible = false;
+  currentScreen = ScreenId::Diagnostics;
 }
 
 static void showDashboard() {
   dashboardScreen.begin();
-  dashboardStarted = true;
-  dashboardVisible = true;
-  diagnosticsVisible = false;
+  currentScreen = ScreenId::Dashboard;
 }
 
 static void showTouchDiagnosticsScreen(const TouchState &touchState) {
   touchDiagnosticsScreen.begin();
   touchDiagnosticsScreen.update(touchState);
-  dashboardVisible = false;
-  diagnosticsVisible = true;
+  currentScreen = ScreenId::Diagnostics;
 }
 
-static bool isMenuTouchTarget(const TouchState &touchState) {
-  return touchState.pressed &&
-         touchState.screenX >= 0 && touchState.screenX < 112 &&
-         touchState.screenY >= 198 && touchState.screenY < 240;
+static void showSettings() {
+  settingsScreen.begin();
+  currentScreen = ScreenId::Settings;
+}
+
+static void showGraph() {
+  graphScreen.begin();
+  currentScreen = ScreenId::Graph;
+}
+
+static void showCalibration() {
+  calibrationScreen.begin();
+  currentScreen = ScreenId::Calibration;
+}
+
+static void handleSerialInput() {
+  while (Serial.available() > 0) {
+    const char command = static_cast<char>(Serial.read());
+    switch (command) {
+      case 'h':
+      case 'H':
+        showDashboard();
+        break;
+      case 's':
+      case 'S':
+        showSettings();
+        break;
+      case 'g':
+      case 'G':
+        showGraph();
+        break;
+      case 'c':
+      case 'C':
+        showCalibration();
+        break;
+      case 'd':
+      case 'D':
+        showTouchDiagnosticsScreen(touchInput.current());
+        break;
+      default:
+        break;
+    }
+  }
 }
 
 static void handleTouch(const TouchState &touchState) {
-  const bool menuPressed = isMenuTouchTarget(touchState);
-  if (menuPressed && !menuWasPressed) {
-    if (dashboardVisible) {
-      showTouchDiagnosticsScreen(touchState);
-    } else {
-      showDashboard();
-    }
+  const bool touchStarted = touchState.pressed && !touchWasPressed;
+  touchWasPressed = touchState.pressed;
 
-    menuWasPressed = true;
+  if (!touchStarted) {
+    if (currentScreen == ScreenId::Dashboard) {
+      if (touchState.pressed) {
+        dashboardScreen.showTouchStatus(touchState.screenX, touchState.screenY);
+      } else {
+        dashboardScreen.showNotPressed();
+      }
+    } else if (currentScreen == ScreenId::Diagnostics) {
+      touchDiagnosticsScreen.update(touchState);
+    }
     return;
   }
 
-  menuWasPressed = menuPressed;
+  const int16_t x = touchState.screenX;
+  const int16_t y = touchState.screenY;
 
-  if (dashboardVisible) {
-    if (touchState.pressed) {
-      dashboardScreen.showTouchStatus(touchState.screenX, touchState.screenY);
-    } else {
-      dashboardScreen.showNotPressed();
-    }
-  }
-
-  if (diagnosticsVisible) {
-    touchDiagnosticsScreen.update(touchState);
+  switch (currentScreen) {
+    case ScreenId::Dashboard:
+      dashboardScreen.showTouchStatus(x, y);
+      if (dashboardScreen.isMenuHit(x, y)) {
+        showSettings();
+      }
+      break;
+    case ScreenId::Settings:
+      if (settingsScreen.isHomeHit(x, y)) {
+        showDashboard();
+      } else if (settingsScreen.isGraphHit(x, y)) {
+        showGraph();
+      } else if (settingsScreen.isCalibrationHit(x, y)) {
+        showCalibration();
+      }
+      break;
+    case ScreenId::Graph:
+      if (graphScreen.isHomeHit(x, y)) {
+        showDashboard();
+      } else if (graphScreen.isSettingsHit(x, y)) {
+        showSettings();
+      }
+      break;
+    case ScreenId::Calibration:
+      if (calibrationScreen.isBackHit(x, y)) {
+        showSettings();
+      }
+      break;
+    case ScreenId::Diagnostics:
+      touchDiagnosticsScreen.update(touchState);
+      break;
+    case ScreenId::Splash:
+      break;
   }
 }
 
@@ -95,6 +173,7 @@ void setup() {
 
   splashScreen.begin(millis());
   splashVisible = true;
+  currentScreen = ScreenId::Splash;
 }
 
 void loop() {
@@ -102,6 +181,7 @@ void loop() {
   const TouchState touchState = touchInput.update(nowMs);
 
   if (splashVisible) {
+    handleSerialInput();
     if (splashScreen.update(nowMs)) {
       splashVisible = false;
       showDashboard();
@@ -109,13 +189,10 @@ void loop() {
     return;
   }
 
-  if (!dashboardStarted && !dashboardVisible && !diagnosticsVisible) {
-    return;
-  }
-
+  handleSerialInput();
   handleTouch(touchState);
 
-  if (dashboardVisible) {
+  if (currentScreen == ScreenId::Dashboard) {
     dashboardScreen.update(nowMs);
   }
 }
