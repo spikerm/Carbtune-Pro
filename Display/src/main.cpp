@@ -20,6 +20,41 @@ static SelfTest selfTest(*gfx, touchInput, sdSpi);
 static CarbtuneScreen carbtuneScreen(*gfx);
 static uint32_t selfTestShownMs = 0;
 static bool dashboardStarted = false;
+static bool dashboardVisible = false;
+static bool menuWasPressed = false;
+
+static void showSelfTestScreen() {
+  selfTest.run();
+  dashboardVisible = false;
+}
+
+static void showDashboard() {
+  carbtuneScreen.begin();
+  dashboardStarted = true;
+  dashboardVisible = true;
+}
+
+static void handleTouch(const TouchState &touchState) {
+  if (dashboardVisible) {
+    if (touchState.pressed) {
+      carbtuneScreen.showTouchStatus(touchState.screenX, touchState.screenY);
+    } else {
+      carbtuneScreen.showNotPressed();
+    }
+  }
+
+  const bool menuPressed = touchState.pressed &&
+                           carbtuneScreen.isMenuHit(touchState.screenX, touchState.screenY);
+  if (menuPressed && !menuWasPressed) {
+    if (dashboardVisible) {
+      showSelfTestScreen();
+    } else {
+      showDashboard();
+    }
+  }
+
+  menuWasPressed = menuPressed;
+}
 
 void setup() {
   Serial.begin(Carbtune::UartBaud);
@@ -29,19 +64,24 @@ void setup() {
   Serial.println(FW_VERSION);
   Serial.println(FW_BUILD);
 
-  selfTest.run();
+  showSelfTestScreen();
   selfTestShownMs = millis();
 }
 
 void loop() {
   const uint32_t nowMs = millis();
-  if (!dashboardStarted) {
+  const TouchState touchState = touchInput.update(nowMs);
+
+  if (!dashboardStarted && !dashboardVisible) {
     if (nowMs - selfTestShownMs >= 5000) {
-      carbtuneScreen.begin();
-      dashboardStarted = true;
+      showDashboard();
     }
     return;
   }
 
-  carbtuneScreen.update(nowMs);
+  handleTouch(touchState);
+
+  if (dashboardVisible) {
+    carbtuneScreen.update(nowMs);
+  }
 }

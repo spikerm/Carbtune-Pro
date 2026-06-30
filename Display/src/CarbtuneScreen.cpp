@@ -10,6 +10,12 @@ static constexpr int16_t BarX = 64;
 static constexpr int16_t BarWidth = 184;
 static constexpr int16_t BarHeight = 16;
 static constexpr int16_t ValueX = 258;
+static constexpr int16_t MenuX = 8;
+static constexpr int16_t MenuY = 218;
+static constexpr int16_t MenuWidth = 76;
+static constexpr int16_t MenuHeight = 20;
+static constexpr int16_t TouchStatusX = 96;
+static constexpr int16_t TouchStatusY = 224;
 static constexpr float MinKpa = 0.0f;
 static constexpr float MaxKpa = 80.0f;
 
@@ -17,10 +23,12 @@ CarbtuneScreen::CarbtuneScreen(Arduino_GFX &display) : display_(display) {}
 
 void CarbtuneScreen::begin() {
   for (uint8_t channel = 0; channel < 4; ++channel) {
-    lastBarWidth_[channel] = -1;
+  lastBarWidth_[channel] = -1;
     lastValueCentiKpa_[channel] = -32768;
   }
   lastDeltaCentiKpa_ = -32768;
+  lastTouchX_ = -2;
+  lastTouchY_ = -2;
   lastUpdateMs_ = 0;
 
   drawStatic();
@@ -68,10 +76,8 @@ void CarbtuneScreen::drawStatic() {
   }
 
   display_.drawFastHLine(8, 198, ScreenWidth - 16, ColorDarkGrey);
-  display_.setTextSize(2);
-  display_.setTextColor(ColorYellow);
-  display_.setCursor(12, 210);
-  display_.print("MENU");
+  drawMenu();
+  showNotPressed();
 }
 
 void CarbtuneScreen::updateDemoValues(uint32_t nowMs) {
@@ -128,4 +134,49 @@ void CarbtuneScreen::drawDelta() {
   display_.print(delta, 1);
   display_.print(" kPa");
   lastDeltaCentiKpa_ = centiKpa;
+}
+
+void CarbtuneScreen::drawMenu() {
+  display_.fillRoundRect(MenuX, MenuY, MenuWidth, MenuHeight, 3, ColorYellow);
+  display_.drawRoundRect(MenuX, MenuY, MenuWidth, MenuHeight, 3, ColorWhite);
+  display_.setTextSize(2);
+  display_.setTextColor(ColorBlack);
+  display_.setCursor(MenuX + 12, MenuY + 3);
+  display_.print("MENU");
+}
+
+void CarbtuneScreen::showTouchStatus(int16_t x, int16_t y) {
+  if (x == lastTouchX_ && y == lastTouchY_) {
+    return;
+  }
+
+  display_.fillRect(TouchStatusX, TouchStatusY, 210, 12, ColorBlack);
+  display_.setTextSize(1);
+  display_.setTextColor(ColorWhite);
+  display_.setCursor(TouchStatusX, TouchStatusY);
+  display_.print("Touch ");
+  display_.print(x);
+  display_.print(",");
+  display_.print(y);
+  lastTouchX_ = x;
+  lastTouchY_ = y;
+}
+
+void CarbtuneScreen::showNotPressed() {
+  if (lastTouchX_ == -1 && lastTouchY_ == -1) {
+    return;
+  }
+
+  display_.fillRect(TouchStatusX, TouchStatusY, 210, 12, ColorBlack);
+  display_.setTextSize(1);
+  display_.setTextColor(ColorDarkGrey);
+  display_.setCursor(TouchStatusX, TouchStatusY);
+  display_.print("Not pressed");
+  lastTouchX_ = -1;
+  lastTouchY_ = -1;
+}
+
+bool CarbtuneScreen::isMenuHit(int16_t x, int16_t y) const {
+  return x >= MenuX && x < (MenuX + MenuWidth) &&
+         y >= MenuY && y < (MenuY + MenuHeight);
 }

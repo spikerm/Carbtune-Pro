@@ -69,6 +69,8 @@ void SelfTest::drawResults() {
     display_.setCursor(132, y);
     display_.print(results_[index].detail);
   }
+
+  drawMenu();
 }
 
 void SelfTest::drawBadge(int16_t x, int16_t y, bool passed) {
@@ -78,6 +80,15 @@ void SelfTest::drawBadge(int16_t x, int16_t y, bool passed) {
   display_.setTextColor(ColorBlack);
   display_.setCursor(x + 8, y + 4);
   display_.print(passed ? "PASS" : "FAIL");
+}
+
+void SelfTest::drawMenu() {
+  display_.fillRoundRect(8, 218, 76, 20, 3, ColorYellow);
+  display_.drawRoundRect(8, 218, 76, 20, 3, ColorWhite);
+  display_.setTextSize(2);
+  display_.setTextColor(ColorBlack);
+  display_.setCursor(20, 221);
+  display_.print("MENU");
 }
 
 void SelfTest::setRgb(bool red, bool green, bool blue) {

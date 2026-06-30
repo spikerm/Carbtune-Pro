@@ -22,6 +22,7 @@ class SelfTest {
   void addResult(const char *name, bool passed, const String &detail);
   void drawResults();
   void drawBadge(int16_t x, int16_t y, bool passed);
+  void drawMenu();
   void setRgb(bool red, bool green, bool blue);
   String touchDetail() const;
 
