@@ -2,7 +2,7 @@
 
 ESP32 carbtune firmware workspace for the display and sensor node.
 
-Current firmware version: `v6.6.0-alpha1`.
+Current firmware version: `v6.6.0-alpha2`.
 
 ## Layout
 

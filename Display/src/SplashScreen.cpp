@@ -29,11 +29,11 @@ void SplashScreen::drawStatic() {
   display_.setTextColor(UiTheme::Text);
   display_.setCursor(48, 90);
   display_.print("CARB");
-  display_.setTextColor(UiTheme::Danger);
+  display_.setTextColor(UiTheme::AlarmRed);
   display_.print("TUNE");
 
-  display_.drawFastHLine(70, 122, 58, UiTheme::Danger);
-  display_.drawFastHLine(190, 122, 58, UiTheme::Danger);
+  display_.drawFastHLine(70, 122, 58, UiTheme::AlarmRed);
+  display_.drawFastHLine(190, 122, 58, UiTheme::AlarmRed);
 
   display_.setTextSize(2);
   display_.setTextColor(UiTheme::Text);
@@ -59,7 +59,7 @@ void SplashScreen::drawGauge() {
     const int16_t y1 = cy + sinf(rad) * (radius - 7);
     const int16_t x2 = cx + cosf(rad) * radius;
     const int16_t y2 = cy + sinf(rad) * radius;
-    const uint16_t color = angle > 295 ? UiTheme::Danger : UiTheme::Text;
+    const uint16_t color = angle > 295 ? UiTheme::AlarmRed : UiTheme::Text;
     display_.drawLine(x1, y1, x2, y2, color);
     display_.drawLine(x1 + 1, y1, x2 + 1, y2, color);
   }
@@ -77,6 +77,6 @@ void SplashScreen::drawProgress(uint8_t activeDots) {
   lastDots_ = activeDots;
   for (uint8_t dot = 0; dot < 7; ++dot) {
     const int16_t x = 122 + (dot * 13);
-    display_.fillCircle(x, 222, 4, dot <= activeDots ? UiTheme::Danger : UiTheme::Muted);
+    display_.fillCircle(x, 222, 4, dot <= activeDots ? UiTheme::AlarmRed : UiTheme::TextMuted);
   }
 }

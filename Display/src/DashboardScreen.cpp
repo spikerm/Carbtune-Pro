@@ -121,7 +121,7 @@ void DashboardScreen::drawCylinder(uint8_t index, int16_t x, int16_t y, int16_t 
   }
 
   const bool alarm = maxDifference() > AlarmThresholdKpa && index == outlierIndex();
-  const uint16_t meterColor = alarm ? UiTheme::Warning : UiTheme::Good;
+  const uint16_t meterColor = alarm ? UiTheme::WarnYellow : UiTheme::GoodGreen;
   const int16_t center = x + (w / 2);
   const int16_t meterX = center - 12;
   const int16_t fillHeight = constrain(static_cast<int16_t>((-valuesKpa_[index]) * MeterHeight / 100.0f), 0, MeterHeight);
@@ -144,8 +144,8 @@ void DashboardScreen::drawCylinder(uint8_t index, int16_t x, int16_t y, int16_t 
     display_.print("-50");
     display_.setCursor(meterX - 30, MeterTop + 72);
     display_.print("-100");
-    display_.drawRect(meterX, MeterTop, 25, MeterHeight, UiTheme::Border);
-    display_.drawRoundRect(center - 28, y + 132, 56, 20, 3, UiTheme::Border);
+    display_.drawRect(meterX, MeterTop, 25, MeterHeight, UiTheme::PanelBorder);
+    display_.drawRoundRect(center - 28, y + 132, 56, 20, 3, UiTheme::PanelBorder);
   }
 
   display_.fillRect(center - 28, y + 36, 56, 18, UiTheme::Panel);
@@ -197,7 +197,7 @@ void DashboardScreen::drawBottomBar(bool force) {
   }
 
   display_.fillRect(30, 224, 62, 12, UiTheme::Panel);
-  display_.setTextColor(alarm ? UiTheme::Danger : UiTheme::Good);
+  display_.setTextColor(alarm ? UiTheme::AlarmRed : UiTheme::GoodGreen);
   display_.setTextSize(2);
   display_.setCursor(38, 224);
   display_.print(static_cast<int>(diff));
@@ -205,7 +205,7 @@ void DashboardScreen::drawBottomBar(bool force) {
 
   display_.fillRect(122, 224, 76, 12, UiTheme::Panel);
   display_.setTextSize(1);
-  display_.setTextColor(alarm ? UiTheme::Danger : UiTheme::Good);
+  display_.setTextColor(alarm ? UiTheme::AlarmRed : UiTheme::GoodGreen);
   display_.setCursor(alarm ? 128 : 146, 226);
   display_.print(alarm ? "BIJSTELLEN" : "GOED");
 
