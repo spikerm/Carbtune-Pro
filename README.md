@@ -71,6 +71,37 @@ SensorNode update support will be handled separately later.
 When a tag matching `v*` is pushed, the same files are also uploaded as release
 assets.
 
+## Display OTA Update
+
+The display web interface can install a display firmware update directly from
+GitHub. The updater downloads:
+
+```text
+https://github.com/spikerm/Carbtune-Pro/releases/latest/download/display-firmware.bin
+```
+
+Requirements:
+
+- The display must be connected to WiFi as a station.
+- AP mode can stay active for service access, but OTA download does not work
+  through AP-only mode.
+- Keep the device powered during the update.
+- Publish a `v*` GitHub release first so `display-firmware.bin` exists as a
+  release asset.
+
+Steps:
+
+1. Connect to the Carbtune web interface.
+2. Save WiFi credentials and wait until station mode is connected.
+3. Open the `GitHub OTA update` section.
+4. Press `Display firmware updaten`.
+5. The display downloads the release asset, writes the OTA partition, and
+   restarts automatically after a complete update.
+
+HTTPS verification is enabled with the pinned GitHub/Sectigo root certificate.
+If GitHub changes its certificate chain in the future, `OtaManager` may need an
+updated root certificate.
+
 ## Upload
 
 ```sh
