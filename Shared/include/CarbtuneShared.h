@@ -5,7 +5,7 @@
 
 namespace Carbtune {
 
-static constexpr const char *FirmwareVersion = "v7.0.0-alpha4";
+static constexpr const char *FirmwareVersion = "v7.0.0-alpha5";
 static constexpr uint32_t UartBaud = 115200;
 static constexpr uint8_t PacketMagic = 0xC6;
 static constexpr uint8_t PacketVersion = 2;

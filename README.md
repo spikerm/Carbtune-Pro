@@ -2,7 +2,7 @@
 
 ESP32 carbtune firmware workspace for the display and sensor node.
 
-Current firmware version: `v7.0.0-alpha4`.
+Current firmware version: `v7.0.0-alpha5`.
 
 ## Layout
 
@@ -23,10 +23,10 @@ Display/src/Storage
 Display/src/Assets
 ```
 
-The v7.0.0-alpha4 build keeps the dark dashboard and touch MENU flow, fixes the
-demo-mode toggle, improves SD detection on the CYD board, reduces dashboard
-redraw flicker, and prepares restrictorless hose operation with filtered
-pressure and RPM diagnostics.
+The v7.0.0-alpha5 build keeps the dark dashboard and touch MENU flow, adds a
+full-screen settings workflow with save/cancel buttons, stores normal
+configuration in ESP32 NVS, and adds SD card maintenance actions for folders,
+test files, settings export, and settings import.
 
 ## Build
 
@@ -59,9 +59,10 @@ The display target uses Arduino_GFX for the TFT.
 - Dashboard: adaptive 2 to 6 cylinder layout, vertical meters, live/demo/no-data
   source, RPM, CH1 reference line, max delta in the header, large status badge,
   MENU.
-- Settings: scrollable list, 2/3/4/5/6 cylinder selection, brightness settings,
-  demo mode toggle, damping, engine stroke, RPM source, calibration shortcut,
-  navigation.
+- Settings: full-screen scrollable list with fixed header/footer, 2/4/6 cylinder
+  segment buttons, brightness settings, demo mode toggle, damping, engine stroke,
+  RPM source, calibration shortcut, SD card maintenance, HOME, ANNULEREN, and
+  OPSLAAN.
 - Graph: dark demo graph view.
 - Calibration: zero-kPa placeholder workflow.
 - Diagnostics: touch raw/mapped values, LDR/backlight diagnostics, sensor mode,
@@ -81,6 +82,23 @@ set high:
 SD starts at 4 MHz and retries once at 1 MHz. Splash and diagnostics show
 `SD OK <MB>`, `SD FAIL NO CARD`, or `SD FAIL INIT`. SD failures are logged but
 do not block display or touch.
+
+Normal settings are stored in ESP32 NVS, not on SD. The SD card is reserved for
+logging, export/import, backups, screenshots, and future firmware update files.
+The settings menu can test the SD card, repair the default folders, export the
+current settings to `/carbtune/config/settings.json`, and import that file back
+into NVS.
+
+Default SD folder layout:
+
+```text
+/carbtune/logs        CSV logs
+/carbtune/config      settings export/import
+/carbtune/backups     backups
+/carbtune/firmware    future firmware updates
+/carbtune/exports     exports
+/carbtune/screenshots future screenshots
+```
 
 ## Cylinder Reference Mode
 
