@@ -27,6 +27,7 @@ void SdManager::begin() {
   initAttempts_ = 0;
   cardType_ = 0;
   cardSizeMb_ = 0;
+  freeSpaceMb_ = 0;
   activeSpeedHz_ = 0;
   folderLayoutOk_ = false;
 
@@ -35,8 +36,14 @@ void SdManager::begin() {
 
   if (!tryBegin(1000000, 1)) {
     SD.end();
+    sdSpi_.end();
     delay(10);
     tryBegin(400000, 2);
+  }
+  if (!mounted_) {
+    SD.end();
+    sdSpi_.end();
+    activeSpeedHz_ = 0;
   }
 
   Serial.println("SD INIT END");
@@ -78,12 +85,7 @@ uint32_t SdManager::cardSizeMb() const {
 }
 
 uint32_t SdManager::freeSpaceMb() const {
-  if (!mounted_) {
-    return 0;
-  }
-  const uint64_t total = SD.totalBytes();
-  const uint64_t used = SD.usedBytes();
-  return total > used ? static_cast<uint32_t>((total - used) / (1024ULL * 1024ULL)) : 0;
+  return mounted_ ? freeSpaceMb_ : 0;
 }
 
 uint32_t SdManager::activeSpeedHz() const {
@@ -144,6 +146,9 @@ bool SdManager::ensureDirectory(const char *path) {
     Serial.print("SD folder failed ");
     Serial.println(path);
     lastError_ = Error::Directory;
+    mounted_ = false;
+    SD.end();
+    sdSpi_.end();
     return false;
   }
   Serial.print("SD folder created ");
@@ -170,6 +175,9 @@ bool SdManager::writeTestFile() {
   File file = SD.open(TestFilePath, FILE_WRITE);
   if (!file) {
     lastError_ = Error::File;
+    mounted_ = false;
+    SD.end();
+    sdSpi_.end();
     return false;
   }
   file.print("carbtune sd test");
@@ -184,6 +192,9 @@ bool SdManager::readTestFile() {
   File file = SD.open(TestFilePath, FILE_READ);
   if (!file) {
     lastError_ = Error::File;
+    mounted_ = false;
+    SD.end();
+    sdSpi_.end();
     return false;
   }
   const String content = file.readString();
@@ -202,6 +213,9 @@ bool SdManager::repairFilesystemLayout() {
     File file = SD.open(FoldersStatusPath, FILE_WRITE);
     if (!file) {
       lastError_ = Error::File;
+      mounted_ = false;
+      SD.end();
+      sdSpi_.end();
       ok = false;
     } else {
       file.println("Carbtune SD folders repaired");
@@ -229,6 +243,9 @@ bool SdManager::exportSettings(const SettingsManager &settings) {
   File file = SD.open(SettingsPath, FILE_WRITE);
   if (!file) {
     lastError_ = Error::File;
+    mounted_ = false;
+    SD.end();
+    sdSpi_.end();
     return false;
   }
   file.println("{");
@@ -255,6 +272,9 @@ bool SdManager::importSettings(SettingsManager &settings) {
   File file = SD.open(SettingsPath, FILE_READ);
   if (!file) {
     lastError_ = Error::File;
+    mounted_ = false;
+    SD.end();
+    sdSpi_.end();
     return false;
   }
   const String json = file.readString();
@@ -319,6 +339,8 @@ bool SdManager::tryBegin(uint32_t speedHz, uint8_t attempt) {
     Serial.println("SD begin FAIL");
     lastError_ = Error::CommandFailed;
     mounted_ = false;
+    SD.end();
+    sdSpi_.end();
     return false;
   }
   Serial.println("SD begin OK");
@@ -329,10 +351,12 @@ bool SdManager::tryBegin(uint32_t speedHz, uint8_t attempt) {
     lastError_ = Error::NoCard;
     mounted_ = false;
     SD.end();
+    sdSpi_.end();
     return false;
   }
 
   cardSizeMb_ = static_cast<uint32_t>(SD.cardSize() / (1024ULL * 1024ULL));
+  freeSpaceMb_ = 0;
   mounted_ = true;
   lastError_ = Error::None;
   activeSpeedHz_ = speedHz;

@@ -55,6 +55,7 @@ class SdManager {
   uint8_t initAttempts_ = 0;
   uint8_t cardType_ = 0;
   uint32_t cardSizeMb_ = 0;
+  uint32_t freeSpaceMb_ = 0;
   uint32_t activeSpeedHz_ = 0;
   bool folderLayoutOk_ = false;
 };
