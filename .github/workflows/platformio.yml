@@ -35,19 +35,47 @@ jobs:
 
       - name: Prepare firmware artifacts
         run: |
-          mkdir -p firmware-artifacts
-          cp .pio/build/display/firmware.bin firmware-artifacts/display-firmware.bin
-          cp .pio/build/sensornode/firmware.bin firmware-artifacts/sensornode-firmware.bin
+          python - <<'PY'
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import os
+          import re
+          import shutil
 
-          FW_VERSION="$(grep -E '#define[[:space:]]+FW_VERSION' Display/include/version.h | sed -E 's/.*"([^"]+)".*/\1/')"
-          {
-            echo "firmware version: ${FW_VERSION:-unknown}"
-            echo "git commit sha: ${GITHUB_SHA}"
-            echo "build date/time: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
-            echo "environments:"
-            echo "- display"
-            echo "- sensornode"
-          } > firmware-artifacts/version.txt
+          root = Path.cwd()
+          out = root / "firmware-artifacts"
+          out.mkdir(exist_ok=True)
+
+          artifacts = {
+              root / ".pio" / "build" / "display" / "firmware.bin": out / "display-firmware.bin",
+              root / ".pio" / "build" / "sensornode" / "firmware.bin": out / "sensornode-firmware.bin",
+          }
+
+          for source, target in artifacts.items():
+              if not source.exists():
+                  raise FileNotFoundError(f"Missing firmware binary: {source}")
+              shutil.copyfile(source, target)
+
+          version_text = (root / "Display" / "include" / "version.h").read_text(encoding="utf-8")
+          match = re.search(r'#define\s+FW_VERSION\s+"([^"]+)"', version_text)
+          firmware_version = match.group(1) if match else "unknown"
+
+          build_time = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          (out / "version.txt").write_text(
+              "\n".join(
+                  [
+                      f"firmware version: {firmware_version}",
+                      f"git commit sha: {os.environ.get('GITHUB_SHA', 'unknown')}",
+                      f"build date/time: {build_time}",
+                      "environments:",
+                      "- display",
+                      "- sensornode",
+                      "",
+                  ]
+              ),
+              encoding="utf-8",
+          )
+          PY
 
       - name: Upload firmware artifacts
         uses: actions/upload-artifact@v4
