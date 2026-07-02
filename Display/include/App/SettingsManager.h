@@ -54,6 +54,9 @@ class SettingsManager {
   void setAutoBrightness(bool enabled);
   void setAutoScale(bool enabled);
   void setUnits(Units units);
+  void setDampingMode(DampingMode mode);
+  void setEngineStroke(EngineStroke stroke);
+  void setRpmSource(RpmSource source);
   void setBrightnessManualPercent(uint8_t percent);
   void setAlarmDeltaKpa(float threshold);
   void setCylinders(uint8_t cylinders);

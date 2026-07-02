@@ -164,6 +164,25 @@ void SettingsManager::setUnits(Units units) {
   units_ = units;
 }
 
+void SettingsManager::setDampingMode(DampingMode mode) {
+  dampingMode_ = mode;
+  if (static_cast<uint8_t>(dampingMode_) > static_cast<uint8_t>(DampingMode::High)) {
+    dampingMode_ = DampingMode::Normal;
+  }
+}
+
+void SettingsManager::setEngineStroke(EngineStroke stroke) {
+  engineStroke_ = (stroke == EngineStroke::TwoStroke) ? EngineStroke::TwoStroke
+                                                      : EngineStroke::FourStroke;
+}
+
+void SettingsManager::setRpmSource(RpmSource source) {
+  rpmSource_ = source;
+  if (static_cast<uint8_t>(rpmSource_) > static_cast<uint8_t>(RpmSource::Auto)) {
+    rpmSource_ = RpmSource::Ch1;
+  }
+}
+
 void SettingsManager::setBrightnessManualPercent(uint8_t percent) {
   brightnessManualPercent_ = constrain(percent, 0, 100);
 }
