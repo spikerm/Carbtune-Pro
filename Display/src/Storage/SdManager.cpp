@@ -16,6 +16,7 @@ constexpr const char *DefaultFolders[] = {
 };
 constexpr const char *TestFilePath = "/carbtune/test.txt";
 constexpr const char *SettingsPath = "/carbtune/config/settings.json";
+constexpr const char *FoldersStatusPath = "/carbtune/config/folders.txt";
 }  // namespace
 
 SdManager::SdManager() : sdSpi_(VSPI) {}
@@ -119,12 +120,18 @@ bool SdManager::ensureDirectory(const char *path) {
     return false;
   }
   if (SD.exists(path)) {
+    Serial.print("SD folder exists ");
+    Serial.println(path);
     return true;
   }
   if (!SD.mkdir(path)) {
+    Serial.print("SD folder failed ");
+    Serial.println(path);
     lastError_ = Error::Directory;
     return false;
   }
+  Serial.print("SD folder created ");
+  Serial.println(path);
   return true;
 }
 
@@ -171,7 +178,27 @@ bool SdManager::readTestFile() {
 }
 
 bool SdManager::repairFilesystemLayout() {
-  const bool ok = ensureDefaultFolders();
+  bool ok = ensureDefaultFolders();
+  if (ok) {
+    if (SD.exists(FoldersStatusPath)) {
+      SD.remove(FoldersStatusPath);
+    }
+    File file = SD.open(FoldersStatusPath, FILE_WRITE);
+    if (!file) {
+      lastError_ = Error::File;
+      ok = false;
+    } else {
+      file.println("Carbtune SD folders repaired");
+      file.println("/carbtune/logs");
+      file.println("/carbtune/config");
+      file.println("/carbtune/backups");
+      file.println("/carbtune/firmware");
+      file.println("/carbtune/exports");
+      file.println("/carbtune/screenshots");
+      file.close();
+      lastError_ = Error::None;
+    }
+  }
   Serial.println(ok ? "SD folders repaired" : "SD folders repair failed");
   return ok;
 }

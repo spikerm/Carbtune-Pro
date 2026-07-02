@@ -61,6 +61,24 @@ void SettingsScreen::update(uint32_t nowMs, const TouchState &touchState) {
     return;
   }
 
+  if (pressed && scrollView_.contains(touchState.screenX, touchState.screenY) &&
+      touchState.screenX >= ViewX + 200) {
+    const int16_t contentY = scrollView_.contentY(touchState.screenY);
+    if (contentHit(contentY, 646) || contentHit(contentY, 682) ||
+        contentHit(contentY, 718) || contentHit(contentY, 754)) {
+      Serial.print("settings direct action tap x=");
+      Serial.print(touchState.screenX);
+      Serial.print(" y=");
+      Serial.print(touchState.screenY);
+      Serial.print(" contentY=");
+      Serial.println(contentY);
+      handleClick(touchState.screenX, touchState.screenY);
+      touchWasPressed_ = touchState.pressed;
+      drawMessage(nowMs);
+      return;
+    }
+  }
+
   scrollView_.update(nowMs, touchState);
   if (scrollView_.offset() != lastOffset_) {
     drawList();
