@@ -4,10 +4,11 @@
 #include <WiFi.h>
 
 #include "App/SettingsManager.h"
+#include "Network/OtaManager.h"
 
 class WebInterface {
  public:
-  explicit WebInterface(SettingsManager &settings);
+  WebInterface(SettingsManager &settings, OtaManager &otaManager);
 
   void begin();
   void update();
@@ -32,12 +33,14 @@ class WebInterface {
   String urlDecode(const String &value) const;
   String page(const String &body) const;
   String wifiSection();
+  String otaSection() const;
   String settingsSection() const;
   String profilesSection() const;
   String statusSection() const;
   String htmlEscape(const String &value) const;
 
   SettingsManager &settings_;
+  OtaManager &otaManager_;
   WiFiServer server_{80};
   String wifiSsid_;
   String wifiPassword_;

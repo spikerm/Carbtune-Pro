@@ -14,6 +14,7 @@
 #include "SettingsScreen.h"
 #include "SplashScreen.h"
 #include "Storage/SdManager.h"
+#include "Network/OtaManager.h"
 #include "Network/WebInterface.h"
 #include "TouchDiagnosticsScreen.h"
 #include "TouchInput.h"
@@ -27,7 +28,8 @@ static SettingsManager settingsManager;
 static BacklightManager backlightManager(settingsManager);
 static SensorManager sensorManager(settingsManager);
 static SdManager sdManager;
-static WebInterface webInterface(settingsManager);
+static OtaManager otaManager;
+static WebInterface webInterface(settingsManager, otaManager);
 static TouchInput touchInput(touch);
 static CalibrationScreen calibrationScreen(*gfx);
 static DashboardScreen dashboardScreen(*gfx, sensorManager);

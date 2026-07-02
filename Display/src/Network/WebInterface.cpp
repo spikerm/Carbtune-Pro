@@ -10,6 +10,7 @@ constexpr const char *Namespace = "webcfg";
 constexpr const char *DefaultApSsid = "Carbtune-Pro";
 constexpr const char *DefaultApPassword = "carbtunepro";
 constexpr uint32_t StationTimeoutMs = 15000;
+constexpr uint32_t OtaResponseDelayMs = 300;
 
 String readString(nvs_handle_t handle, const char *key, size_t maxLen) {
   size_t length = 0;
@@ -30,7 +31,8 @@ void writeString(nvs_handle_t handle, const char *key, const String &value) {
 }
 }  // namespace
 
-WebInterface::WebInterface(SettingsManager &settings) : settings_(settings) {}
+WebInterface::WebInterface(SettingsManager &settings, OtaManager &otaManager)
+    : settings_(settings), otaManager_(otaManager) {}
 
 void WebInterface::begin() {
   load();
@@ -38,6 +40,7 @@ void WebInterface::begin() {
   WiFi.setSleep(false);
   startAccessPoint();
   startStation();
+  otaManager_.begin();
   server_.begin();
   Serial.print("WEB AP ");
   Serial.print(apSsid());
@@ -200,8 +203,21 @@ void WebInterface::handleRequest(WiFiClient &client, const String &requestLine) 
     return;
   }
 
+  if (route == "/ota-update") {
+    String body = statusSection();
+    body += F("<section class='card'><h2>GitHub OTA</h2>");
+    body += F("<p class='warn'>OTA update gestart. Houd de voeding aangesloten.</p>");
+    body += F("<p>De display herstart automatisch als de update klaar is.</p></section>");
+    sendPage(client, body);
+    client.flush();
+    delay(OtaResponseDelayMs);
+    otaManager_.updateFromGithub();
+    return;
+  }
+
   String body = statusSection();
   body += wifiSection();
+  body += otaSection();
   body += settingsSection();
   body += profilesSection();
   sendPage(client, body);
@@ -274,6 +290,7 @@ String WebInterface::page(const String &body) const {
   html += F(".card{background:#101821;border:1px solid #2d3b48;border-radius:8px;padding:14px;margin:0 0 14px}");
   html += F("label{display:block;margin:10px 0 4px;color:#aeb8c2}input,select,textarea{width:100%;box-sizing:border-box;background:#060a10;color:#fff;border:1px solid #405568;border-radius:5px;padding:10px}");
   html += F("textarea{min-height:120px}button{background:#0077cc;color:white;border:0;border-radius:5px;padding:11px 14px;margin-top:12px;font-weight:bold}");
+  html += F("button.danger{background:#b51d1d}.mono{font-family:Consolas,monospace;font-size:12px;overflow-wrap:anywhere}");
   html += F(".row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ok{color:#49e042}.warn{color:#ffc247}.muted{color:#9ba8b3}.net{padding:6px 0;border-bottom:1px solid #24303b}");
   html += F("</style></head><body><h1>CARBTUNE PRO ESP32</h1>");
   html += body;
@@ -309,6 +326,23 @@ String WebInterface::wifiSection() {
   html += htmlEscape(wifiPassword_);
   html += F("'><button>WiFi opslaan en verbinden</button></form></section>");
   WiFi.scanDelete();
+  return html;
+}
+
+String WebInterface::otaSection() const {
+  String html;
+  html += F("<section class='card'><h2>GitHub OTA update</h2>");
+  html += F("<div>Status: <span class='muted'>");
+  html += htmlEscape(otaManager_.lastStatus());
+  html += F("</span></div><div>Bron: <span class='mono'>");
+  html += OtaManager::DefaultFirmwareUrl;
+  html += F("</span></div>");
+  if (!stationConnected()) {
+    html += F("<p class='warn'>Verbind eerst met WiFi. OTA werkt niet via alleen AP mode.</p>");
+  }
+  html += F("<form method='get' action='/ota-update'>");
+  html += F("<button class='danger' onclick=\"return confirm('GitHub OTA update starten? Voeding aangesloten houden.')\">Display firmware updaten</button>");
+  html += F("</form></section>");
   return html;
 }
 
