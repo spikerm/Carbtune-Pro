@@ -2,7 +2,14 @@ name: PlatformIO
 
 on:
   push:
+    branches:
+      - main
+    tags:
+      - "v*"
   pull_request:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -20,5 +27,36 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
-      - name: Build
-        run: pio run
+      - name: Build display firmware
+        run: pio run -e display
+
+      - name: Build SensorNode firmware
+        run: pio run -e sensornode
+
+      - name: Prepare firmware artifacts
+        run: |
+          mkdir -p firmware-artifacts
+          cp .pio/build/display/firmware.bin firmware-artifacts/display-firmware.bin
+          cp .pio/build/sensornode/firmware.bin firmware-artifacts/sensornode-firmware.bin
+
+          FW_VERSION="$(grep -E '#define[[:space:]]+FW_VERSION' Display/include/version.h | sed -E 's/.*"([^"]+)".*/\1/')"
+          {
+            echo "firmware version: ${FW_VERSION:-unknown}"
+            echo "git commit sha: ${GITHUB_SHA}"
+            echo "build date/time: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+            echo "environments:"
+            echo "- display"
+            echo "- sensornode"
+          } > firmware-artifacts/version.txt
+
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: carbtune-firmware-${{ github.sha }}
+          path: firmware-artifacts/*
+
+      - name: Upload release firmware assets
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: firmware-artifacts/*
