@@ -11,6 +11,7 @@ class SdManager {
     None,
     NoCard,
     InitFailed,
+    CommandFailed,
     NotMounted,
     Directory,
     File,
@@ -25,6 +26,7 @@ class SdManager {
   const char *cardTypeName() const;
   uint32_t cardSizeMb() const;
   uint32_t freeSpaceMb() const;
+  uint32_t activeSpeedHz() const;
   const char *lastError() const;
   const char *lastErrorName() const;
   uint8_t initAttempts() const;
@@ -37,6 +39,7 @@ class SdManager {
   bool repairFilesystemLayout();
   bool exportSettings(const SettingsManager &settings);
   bool importSettings(SettingsManager &settings);
+  bool retryMount();
 
  private:
   bool tryBegin(uint32_t speedHz, uint8_t attempt);
@@ -52,5 +55,6 @@ class SdManager {
   uint8_t initAttempts_ = 0;
   uint8_t cardType_ = 0;
   uint32_t cardSizeMb_ = 0;
+  uint32_t activeSpeedHz_ = 0;
   bool folderLayoutOk_ = false;
 };

@@ -190,7 +190,7 @@ void SettingsScreen::drawList() {
   drawRow("Kalibratie", "OPEN", 440 - offset, true);
 
   drawSection("SD KAART", 482 - offset);
-  drawRow("Status", sdManager_.mounted() ? "OK" : "Niet gevonden", 502 - offset);
+  drawRow("Status", sdManager_.mounted() ? "OK" : "NIET BESCHIKBAAR", 502 - offset);
   drawRow("Grootte", String(sdManager_.cardSizeMb()) + " MB", 538 - offset);
   drawRow("Vrij", String(sdManager_.freeSpaceMb()) + " MB", 574 - offset);
   drawRow("Laatste fout", sdManager_.lastErrorName(), 610 - offset);
@@ -330,13 +330,16 @@ void SettingsScreen::handleClick(int16_t screenX, int16_t screenY) {
     pendingAction_ = SettingsAction::Calibration;
   } else if (contentHit(y, 646)) {
     Serial.println("settings action=TEST_SD");
-    const bool ok = sdManager_.writeTestFile() && sdManager_.readTestFile();
+    bool ok = sdManager_.retryMount();
+    if (ok) {
+      ok = sdManager_.writeTestFile() && sdManager_.readTestFile();
+    }
     setMessage(ok ? "SD test OK" : sdManager_.lastErrorName(), millis());
     drawList();
   } else if (contentHit(y, 682)) {
     Serial.println("settings action=REPAIR_SD_FOLDERS");
-    const bool ok = sdManager_.repairFilesystemLayout();
-    setMessage(ok ? "SD mappen hersteld" : sdManager_.lastErrorName(), millis());
+    const bool ok = sdManager_.mounted() && sdManager_.repairFilesystemLayout();
+    setMessage(ok ? "SD mappen hersteld" : "SD niet beschikbaar", millis());
     drawList();
   } else if (contentHit(y, 718)) {
     Serial.println("settings action=EXPORT_SETTINGS");

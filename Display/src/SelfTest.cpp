@@ -119,8 +119,15 @@ bool SelfTest::testTouch() {
 }
 
 bool SelfTest::testSd() {
+  pinMode(TFT_CS, OUTPUT);
+  pinMode(TOUCH_CS, OUTPUT);
+  pinMode(SD_CS, OUTPUT);
+  digitalWrite(TFT_CS, HIGH);
+  digitalWrite(TOUCH_CS, HIGH);
+  digitalWrite(SD_CS, HIGH);
+  delay(20);
   sdSpi_.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
-  const bool ok = SD.begin(SD_CS, sdSpi_);
+  const bool ok = SD.begin(SD_CS, sdSpi_, 400000);
   addResult("SD", ok, ok ? String(SD.cardSize() / (1024 * 1024)) + " MB" : "not mounted");
   if (ok) {
     SD.end();

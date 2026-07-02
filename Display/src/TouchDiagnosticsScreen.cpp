@@ -89,7 +89,8 @@ void TouchDiagnosticsScreen::update(const TouchState &touchState) {
   drawRow("SD free", String(sdManager_.freeSpaceMb()) + " MB", 52 + (RowHeight * 25), true);
   drawRow("SD error", sdManager_.lastErrorName(), 52 + (RowHeight * 26), true);
   drawRow("SD attempts", String(sdManager_.initAttempts()), 52 + (RowHeight * 27), true);
-  drawRow("SD folders", sdManager_.folderLayoutOk() ? "OK" : "FAIL", 52 + (RowHeight * 28), true);
+  drawRow("SD speed", String(sdManager_.activeSpeedHz()), 52 + (RowHeight * 28), true);
+  drawRow("SD folders", sdManager_.folderLayoutOk() ? "OK" : "FAIL", 52 + (RowHeight * 29), true);
 
   lastState_ = touchState;
   lastLdrRaw_ = ldrRaw;

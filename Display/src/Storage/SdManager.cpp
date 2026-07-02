@@ -23,20 +23,30 @@ SdManager::SdManager() : sdSpi_(VSPI) {}
 
 void SdManager::begin() {
   mounted_ = false;
-  lastError_ = Error::InitFailed;
+  lastError_ = Error::CommandFailed;
   initAttempts_ = 0;
   cardType_ = 0;
   cardSizeMb_ = 0;
+  activeSpeedHz_ = 0;
+  folderLayoutOk_ = false;
 
   Serial.println("SD INIT START");
   logPins();
 
-  if (tryBegin(4000000, 1)) {
-    return;
+  if (!tryBegin(1000000, 1)) {
+    SD.end();
+    delay(10);
+    tryBegin(400000, 2);
   }
+
+  Serial.println("SD INIT END");
+}
+
+bool SdManager::retryMount() {
   SD.end();
-  delay(5);
-  tryBegin(1000000, 2);
+  delay(10);
+  begin();
+  return mounted_;
 }
 
 bool SdManager::isMounted() const {
@@ -76,6 +86,10 @@ uint32_t SdManager::freeSpaceMb() const {
   return total > used ? static_cast<uint32_t>((total - used) / (1024ULL * 1024ULL)) : 0;
 }
 
+uint32_t SdManager::activeSpeedHz() const {
+  return activeSpeedHz_;
+}
+
 const char *SdManager::lastError() const {
   return lastErrorName();
 }
@@ -88,6 +102,8 @@ const char *SdManager::lastErrorName() const {
       return "NO CARD";
     case Error::InitFailed:
       return "INIT";
+    case Error::CommandFailed:
+      return "GO_IDLE_STATE failed / no token";
     case Error::NotMounted:
       return "NOT MOUNTED";
     case Error::Directory:
@@ -112,7 +128,7 @@ String SdManager::statusText() const {
   if (mounted_) {
     return String("SD OK ") + String(cardSizeMb_) + "MB";
   }
-  return String("SD FAIL ") + lastErrorName();
+  return "SD NIET BESCHIKBAAR";
 }
 
 bool SdManager::ensureDirectory(const char *path) {
@@ -290,6 +306,7 @@ bool SdManager::importSettings(SettingsManager &settings) {
 bool SdManager::tryBegin(uint32_t speedHz, uint8_t attempt) {
   initAttempts_ = attempt;
   prepareChipSelects();
+  delay(20);
   sdSpi_.begin(SD_SCK, SD_MISO, SD_MOSI, SD_CS);
 
   Serial.print("SD attempt=");
@@ -297,12 +314,14 @@ bool SdManager::tryBegin(uint32_t speedHz, uint8_t attempt) {
   Serial.print(" speed=");
   Serial.println(speedHz);
 
+  Serial.println("SD begin START");
   if (!SD.begin(SD_CS, sdSpi_, speedHz)) {
-    Serial.println("SD result=begin failed");
-    lastError_ = Error::InitFailed;
+    Serial.println("SD begin FAIL");
+    lastError_ = Error::CommandFailed;
     mounted_ = false;
     return false;
   }
+  Serial.println("SD begin OK");
 
   cardType_ = SD.cardType();
   if (cardType_ == CARD_NONE) {
@@ -316,6 +335,7 @@ bool SdManager::tryBegin(uint32_t speedHz, uint8_t attempt) {
   cardSizeMb_ = static_cast<uint32_t>(SD.cardSize() / (1024ULL * 1024ULL));
   mounted_ = true;
   lastError_ = Error::None;
+  activeSpeedHz_ = speedHz;
   folderLayoutOk_ = false;
 
   Serial.print("SD result=ok type=");
@@ -329,12 +349,8 @@ bool SdManager::ensureMounted() {
   if (mounted_) {
     return true;
   }
-  begin();
-  if (!mounted_) {
-    lastError_ = lastError_ == Error::None ? Error::NotMounted : lastError_;
-    return false;
-  }
-  return true;
+  lastError_ = lastError_ == Error::None ? Error::NotMounted : lastError_;
+  return false;
 }
 
 void SdManager::prepareChipSelects() const {

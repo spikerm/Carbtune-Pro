@@ -79,9 +79,14 @@ set high:
 - `TOUCH_CS`
 - `SD_CS`
 
-SD starts at 4 MHz and retries once at 1 MHz. Splash and diagnostics show
-`SD OK <MB>`, `SD FAIL NO CARD`, or `SD FAIL INIT`. SD failures are logged but
-do not block display or touch.
+SD starts at 1 MHz and retries once at 400 kHz. Before each SD init attempt,
+TFT, touch, and SD chip-select pins are driven high and held briefly so the SD
+card gets a clean SPI bus. Splash and diagnostics show `SD OK <MB>` or
+`SD NIET BESCHIKBAAR`. SD failures are logged but do not block display or touch.
+After a failed mount, firmware does not keep retrying in the background. Re-seat
+the card and use `TEST SD` in the settings menu for one explicit retry.
+
+Use a FAT32-formatted card. An 8-32GB SD card is recommended for the CYD board.
 
 Normal settings are stored in ESP32 NVS, not on SD. The SD card is reserved for
 logging, export/import, backups, screenshots, and future firmware update files.
