@@ -35,6 +35,8 @@ jobs:
 
       - name: Prepare firmware artifacts
         run: |
+          echo "Available PlatformIO binaries:"
+          find .pio/build -maxdepth 3 -type f -name '*.bin' -print | sort
           python - <<'PY'
           from datetime import datetime, timezone
           from pathlib import Path
@@ -46,15 +48,22 @@ jobs:
           out = root / "firmware-artifacts"
           out.mkdir(exist_ok=True)
 
-          artifacts = {
-              root / ".pio" / "build" / "display" / "firmware.bin": out / "display-firmware.bin",
-              root / ".pio" / "build" / "sensornode" / "firmware.bin": out / "sensornode-firmware.bin",
-          }
+          def firmware_for(environment):
+              env_dir = root / ".pio" / "build" / environment
+              preferred = env_dir / "firmware.bin"
+              if preferred.exists():
+                  return preferred
+              matches = sorted(
+                  path for path in env_dir.glob("*.bin")
+                  if path.name not in {"bootloader.bin", "partitions.bin"}
+              )
+              if matches:
+                  return matches[0]
+              all_bins = "\n".join(str(path) for path in sorted((root / ".pio" / "build").glob("**/*.bin")))
+              raise FileNotFoundError(f"Missing firmware binary for {environment}. Available bins:\n{all_bins}")
 
-          for source, target in artifacts.items():
-              if not source.exists():
-                  raise FileNotFoundError(f"Missing firmware binary: {source}")
-              shutil.copyfile(source, target)
+          shutil.copyfile(firmware_for("display"), out / "display-firmware.bin")
+          shutil.copyfile(firmware_for("sensornode"), out / "sensornode-firmware.bin")
 
           version_text = (root / "Display" / "include" / "version.h").read_text(encoding="utf-8")
           match = re.search(r'#define\s+FW_VERSION\s+"([^"]+)"', version_text)
