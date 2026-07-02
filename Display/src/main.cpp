@@ -29,7 +29,7 @@ static BacklightManager backlightManager(settingsManager);
 static SensorManager sensorManager(settingsManager);
 static SdManager sdManager;
 static OtaManager otaManager;
-static WebInterface webInterface(settingsManager, otaManager);
+static WebInterface webInterface(settingsManager, otaManager, sensorManager, sdManager);
 static TouchInput touchInput(touch);
 static CalibrationScreen calibrationScreen(*gfx);
 static DashboardScreen dashboardScreen(*gfx, sensorManager);

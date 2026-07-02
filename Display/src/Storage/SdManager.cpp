@@ -17,6 +17,22 @@ constexpr const char *DefaultFolders[] = {
 constexpr const char *TestFilePath = "/carbtune/test.txt";
 constexpr const char *SettingsPath = "/carbtune/config/settings.json";
 constexpr const char *FoldersStatusPath = "/carbtune/config/folders.txt";
+constexpr const char *VehicleProfilesPath = "/carbtune/config/vehicle_profiles.tsv";
+
+String cleanTsvField(const String &value) {
+  String cleaned;
+  cleaned.reserve(value.length());
+  for (size_t index = 0; index < value.length(); ++index) {
+    const char c = value[index];
+    if (c == '\t' || c == '\r' || c == '\n') {
+      cleaned += ' ';
+    } else {
+      cleaned += c;
+    }
+  }
+  cleaned.trim();
+  return cleaned;
+}
 }  // namespace
 
 SdManager::SdManager() : sdSpi_(VSPI) {}
@@ -321,6 +337,54 @@ bool SdManager::importSettings(SettingsManager &settings) {
   const bool saved = settings.save();
   lastError_ = saved ? Error::None : Error::File;
   return saved;
+}
+
+bool SdManager::saveVehicleProfile(const String &customer, const String &vehicle,
+                                   const String &notes) {
+  if (!ensureDefaultFolders()) {
+    return false;
+  }
+  const bool needsHeader = !SD.exists(VehicleProfilesPath);
+  File file = SD.open(VehicleProfilesPath, FILE_APPEND);
+  if (!file) {
+    lastError_ = Error::File;
+    mounted_ = false;
+    SD.end();
+    sdSpi_.end();
+    return false;
+  }
+  if (needsHeader) {
+    file.println("saved_ms\tcustomer\tvehicle\tnotes");
+  }
+  file.print(millis());
+  file.print('\t');
+  file.print(cleanTsvField(customer));
+  file.print('\t');
+  file.print(cleanTsvField(vehicle));
+  file.print('\t');
+  file.println(cleanTsvField(notes));
+  file.close();
+  lastError_ = Error::None;
+  return true;
+}
+
+String SdManager::loadVehicleProfiles(size_t maxBytes) {
+  if (!ensureMounted()) {
+    return "";
+  }
+  File file = SD.open(VehicleProfilesPath, FILE_READ);
+  if (!file) {
+    lastError_ = Error::File;
+    return "";
+  }
+  String content;
+  content.reserve(min(maxBytes, static_cast<size_t>(file.size())));
+  while (file.available() && content.length() < maxBytes) {
+    content += static_cast<char>(file.read());
+  }
+  file.close();
+  lastError_ = Error::None;
+  return content;
 }
 
 bool SdManager::tryBegin(uint32_t speedHz, uint8_t attempt) {

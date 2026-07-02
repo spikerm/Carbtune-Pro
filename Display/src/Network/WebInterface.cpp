@@ -31,8 +31,12 @@ void writeString(nvs_handle_t handle, const char *key, const String &value) {
 }
 }  // namespace
 
-WebInterface::WebInterface(SettingsManager &settings, OtaManager &otaManager)
-    : settings_(settings), otaManager_(otaManager) {}
+WebInterface::WebInterface(SettingsManager &settings, OtaManager &otaManager,
+                           SensorManager &sensorManager, SdManager &sdManager)
+    : settings_(settings),
+      otaManager_(otaManager),
+      sensorManager_(sensorManager),
+      sdManager_(sdManager) {}
 
 void WebInterface::begin() {
   load();
@@ -199,7 +203,20 @@ void WebInterface::handleRequest(WiFiClient &client, const String &requestLine) 
     vehicleName_ = queryArg(path, "vehicle");
     vehicleProfiles_ = queryArg(path, "profiles");
     saveProfiles();
+    if (!customerName_.isEmpty() || !vehicleName_.isEmpty() || !vehicleProfiles_.isEmpty()) {
+      profileSaveStatus_ = sdManager_.saveVehicleProfile(customerName_, vehicleName_, vehicleProfiles_)
+                               ? "Profiel opgeslagen op SD"
+                               : String("SD opslag mislukt: ") + sdManager_.lastError();
+    }
     redirectHome(client);
+    return;
+  }
+
+  if (route == "/live") {
+    String body = statusSection();
+    body += liveSection();
+    body += F("<section class='card'><a class='button' href='/'>Terug naar menu</a></section>");
+    sendPage(client, body, true);
     return;
   }
 
@@ -216,15 +233,21 @@ void WebInterface::handleRequest(WiFiClient &client, const String &requestLine) 
   }
 
   String body = statusSection();
+  body += liveSection();
   body += wifiSection();
   body += otaSection();
   body += settingsSection();
   body += profilesSection();
+  body += profileHistorySection();
   sendPage(client, body);
 }
 
 void WebInterface::sendPage(WiFiClient &client, const String &body) {
-  const String html = page(body);
+  sendPage(client, body, false);
+}
+
+void WebInterface::sendPage(WiFiClient &client, const String &body, bool autoRefresh) {
+  const String html = page(body, autoRefresh);
   client.println(F("HTTP/1.1 200 OK"));
   client.println(F("Content-Type: text/html; charset=utf-8"));
   client.println(F("Connection: close"));
@@ -280,21 +303,60 @@ String WebInterface::urlDecode(const String &value) const {
   return decoded;
 }
 
-String WebInterface::page(const String &body) const {
+String WebInterface::page(const String &body, bool autoRefresh) const {
   String html;
   html.reserve(body.length() + 1600);
   html += F("<!doctype html><html><head><meta name='viewport' content='width=device-width,initial-scale=1'>");
+  if (autoRefresh) {
+    html += F("<meta http-equiv='refresh' content='2'>");
+  }
   html += F("<title>Carbtune Pro</title><style>");
   html += F("body{font-family:Arial,sans-serif;background:#05080d;color:#f6f8fb;margin:0;padding:16px}");
   html += F("h1{font-size:24px;margin:0 0 12px}h2{font-size:18px;margin:0 0 10px}");
   html += F(".card{background:#101821;border:1px solid #2d3b48;border-radius:8px;padding:14px;margin:0 0 14px}");
   html += F("label{display:block;margin:10px 0 4px;color:#aeb8c2}input,select,textarea{width:100%;box-sizing:border-box;background:#060a10;color:#fff;border:1px solid #405568;border-radius:5px;padding:10px}");
-  html += F("textarea{min-height:120px}button{background:#0077cc;color:white;border:0;border-radius:5px;padding:11px 14px;margin-top:12px;font-weight:bold}");
+  html += F("textarea{min-height:120px}button,.button{display:inline-block;background:#0077cc;color:white;border:0;border-radius:5px;padding:11px 14px;margin-top:12px;font-weight:bold;text-decoration:none}");
   html += F("button.danger{background:#b51d1d}.mono{font-family:Consolas,monospace;font-size:12px;overflow-wrap:anywhere}");
+  html += F("table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid #263544;padding:6px;text-align:right}th:first-child,td:first-child{text-align:left}.bar{height:10px;background:#071019;border:1px solid #263544;border-radius:5px;overflow:hidden}.fill{height:100%;background:#35d018}");
   html += F(".row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.ok{color:#49e042}.warn{color:#ffc247}.muted{color:#9ba8b3}.net{padding:6px 0;border-bottom:1px solid #24303b}");
   html += F("</style></head><body><h1>CARBTUNE PRO ESP32</h1>");
   html += body;
   html += F("</body></html>");
+  return html;
+}
+
+String WebInterface::liveSection() const {
+  const uint32_t nowMs = millis();
+  String html;
+  html += F("<section class='card'><h2>Live meting</h2>");
+  html += F("<div class='row'><div>Bron: <strong>");
+  html += sensorManager_.modeName();
+  html += F("</strong></div><div>RPM: <strong>");
+  html += sensorManager_.rpmStable() ? String(sensorManager_.rpm()) : String("--");
+  html += F("</strong></div></div>");
+  html += F("<div class='row'><div>Max verschil: <strong>");
+  html += String(sensorManager_.maxDeltaKpa(), 1);
+  html += F(" kPa</strong></div><div>Laatste frame: <strong>");
+  html += String(sensorManager_.lastFrameAgeMs(nowMs));
+  html += F(" ms</strong></div></div>");
+  html += F("<table><tr><th>CH</th><th>kPa</th><th>Raw</th><th>Filter</th><th>Hz</th></tr>");
+  for (uint8_t channel = 0; channel < sensorManager_.channelCount(); ++channel) {
+    html += F("<tr><td>CH");
+    html += String(channel + 1);
+    html += F("<div class='bar'><div class='fill' style='width:");
+    html += String(constrain(static_cast<int>(-sensorManager_.valueKpa(channel)), 0, 100));
+    html += F("%'></div></div></td><td>");
+    html += String(sensorManager_.valueKpa(channel), 1);
+    html += F("</td><td>");
+    html += String(sensorManager_.rawValue(channel));
+    html += F("</td><td>");
+    html += String(sensorManager_.filteredValue(channel));
+    html += F("</td><td>");
+    html += String(sensorManager_.pulseHz(channel), 1);
+    html += F("</td></tr>");
+  }
+  html += F("</table><p class='muted'>Ververs de pagina voor actuele meetwaarden.</p></section>");
+  html += F("<section class='card'><a class='button' href='/live'>Live meting openen</a></section>");
   return html;
 }
 
@@ -385,6 +447,11 @@ String WebInterface::settingsSection() const {
 String WebInterface::profilesSection() const {
   String html;
   html += F("<section class='card'><h2>Klanten en voertuigprofielen</h2><form method='get' action='/profiles'>");
+  if (!profileSaveStatus_.isEmpty()) {
+    html += F("<p class='muted'>");
+    html += htmlEscape(profileSaveStatus_);
+    html += F("</p>");
+  }
   html += F("<label>Klant</label><input name='customer' value='");
   html += htmlEscape(customerName_);
   html += F("'><label>Voertuig</label><input name='vehicle' value='");
@@ -392,6 +459,22 @@ String WebInterface::profilesSection() const {
   html += F("'><label>Profielen / notities</label><textarea name='profiles'>");
   html += htmlEscape(vehicleProfiles_);
   html += F("</textarea><button>Profielen opslaan</button></form></section>");
+  return html;
+}
+
+String WebInterface::profileHistorySection() {
+  String html;
+  html += F("<section class='card'><h2>Voorgaande voertuigprofielen</h2>");
+  const String history = sdManager_.loadVehicleProfiles();
+  if (history.isEmpty()) {
+    html += F("<p class='warn'>Geen SD-profielhistorie gevonden.</p>");
+    html += F("<p class='muted'>Sla een klant/voertuigprofiel op om historie op SD te maken.</p>");
+  } else {
+    html += F("<pre class='mono'>");
+    html += htmlEscape(history);
+    html += F("</pre>");
+  }
+  html += F("</section>");
   return html;
 }
 

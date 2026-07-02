@@ -39,6 +39,8 @@ class SdManager {
   bool repairFilesystemLayout();
   bool exportSettings(const SettingsManager &settings);
   bool importSettings(SettingsManager &settings);
+  bool saveVehicleProfile(const String &customer, const String &vehicle, const String &notes);
+  String loadVehicleProfiles(size_t maxBytes = 2048);
   bool retryMount();
 
  private:
