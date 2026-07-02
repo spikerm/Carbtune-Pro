@@ -15,10 +15,6 @@ static constexpr int16_t PanelH = 158;
 static constexpr int16_t MeterTop = 96;
 static constexpr int16_t MeterHeight = 58;
 static constexpr int16_t FooterY = 198;
-static constexpr int16_t MenuX = 238;
-static constexpr int16_t MenuY = 207;
-static constexpr int16_t MenuW = 74;
-static constexpr int16_t MenuH = 24;
 
 DashboardScreen::DashboardScreen(Arduino_GFX &display, SensorManager &sensorManager)
     : display_(display), sensorManager_(sensorManager) {}
@@ -93,7 +89,9 @@ uint8_t DashboardScreen::cylinderCount() const {
 }
 
 bool DashboardScreen::isMenuHit(int16_t x, int16_t y) const {
-  return x >= 230 && x < 320 && y >= 195 && y < 240;
+  (void)x;
+  (void)y;
+  return false;
 }
 
 void DashboardScreen::showTouchStatus(int16_t x, int16_t y) {
@@ -258,19 +256,13 @@ void DashboardScreen::drawBottomBar(bool force) {
     display_.fillRect(0, FooterY, UiTheme::ScreenWidth, UiTheme::ScreenHeight - FooterY,
                       UiTheme::Background);
     display_.drawFastHLine(8, FooterY, 304, UiTheme::Border);
-    display_.fillRoundRect(MenuX, MenuY, MenuW, MenuH, 4, UiTheme::AccentDark);
-    display_.drawRoundRect(MenuX, MenuY, MenuW, MenuH, 4, UiTheme::Accent);
-    display_.setTextSize(1);
-    display_.setTextColor(UiTheme::Text);
-    display_.setCursor(MenuX + 10, MenuY + 8);
-    display_.print("MENU *");
   }
 
-  display_.fillRoundRect(12, 204, 204, 32, 5, statusColor());
-  display_.drawRoundRect(12, 204, 204, 32, 5, UiTheme::Text);
+  display_.fillRoundRect(12, 204, 296, 32, 5, statusColor());
+  display_.drawRoundRect(12, 204, 296, 32, 5, UiTheme::Text);
   display_.setTextColor(UiTheme::Background);
   display_.setTextSize(2);
-  display_.setCursor(maxDifference() > WarnThresholdKpa ? 42 : 76, 212);
+  display_.setCursor(maxDifference() > WarnThresholdKpa ? 76 : 124, 212);
   display_.print(statusText());
   lastStatus_ = currentStatus;
 }

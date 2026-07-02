@@ -151,7 +151,9 @@ ScreenId ScreenManager::current() const {
 }
 
 bool ScreenManager::isDashboardMenuTarget(int16_t x, int16_t y) const {
-  return x >= 230 && x < 320 && y >= 195 && y < 240;
+  (void)x;
+  (void)y;
+  return false;
 }
 
 bool ScreenManager::handleGlobalTouch(int16_t x, int16_t y) {
@@ -163,14 +165,6 @@ bool ScreenManager::handleGlobalTouch(int16_t x, int16_t y) {
     return true;
   }
 
-  if (isGlobalMenuTarget(x, y) && current_ != ScreenId::Settings) {
-    Serial.print("button=MENU screen=");
-    Serial.print(screenName(current_));
-    Serial.println(" action=Settings");
-    show(ScreenId::Settings);
-    return true;
-  }
-
   return false;
 }
 
@@ -179,7 +173,9 @@ bool ScreenManager::isGlobalHomeTarget(int16_t x, int16_t y) const {
 }
 
 bool ScreenManager::isGlobalMenuTarget(int16_t x, int16_t y) const {
-  return x >= 220 && x < 320 && y >= 195 && y < 240;
+  (void)x;
+  (void)y;
+  return false;
 }
 
 const char *ScreenManager::screenName(ScreenId id) const {
