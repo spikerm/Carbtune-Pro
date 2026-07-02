@@ -14,6 +14,7 @@
 #include "SettingsScreen.h"
 #include "SplashScreen.h"
 #include "Storage/SdManager.h"
+#include "Network/WebInterface.h"
 #include "TouchDiagnosticsScreen.h"
 #include "TouchInput.h"
 
@@ -26,6 +27,7 @@ static SettingsManager settingsManager;
 static BacklightManager backlightManager(settingsManager);
 static SensorManager sensorManager(settingsManager);
 static SdManager sdManager;
+static WebInterface webInterface(settingsManager);
 static TouchInput touchInput(touch);
 static CalibrationScreen calibrationScreen(*gfx);
 static DashboardScreen dashboardScreen(*gfx, sensorManager);
@@ -37,7 +39,7 @@ static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput, backlight
 static ScreenManager screenManager(splashScreen, dashboardScreen, settingsScreen, graphScreen,
                                    calibrationScreen, touchDiagnosticsScreen, touchInput);
 static AppController appController(*gfx, touchInput, backlightManager, sensorManager, sdManager,
-                                   screenManager);
+                                   webInterface, screenManager);
 
 void setup() {
   settingsManager.begin();

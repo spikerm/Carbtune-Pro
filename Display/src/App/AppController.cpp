@@ -8,12 +8,14 @@
 
 AppController::AppController(Arduino_GFX &display, TouchInput &touchInput,
                              BacklightManager &backlightManager, SensorManager &sensorManager,
-                             SdManager &sdManager, ScreenManager &screenManager)
+                             SdManager &sdManager, WebInterface &webInterface,
+                             ScreenManager &screenManager)
     : display_(display),
       touchInput_(touchInput),
       backlightManager_(backlightManager),
       sensorManager_(sensorManager),
       sdManager_(sdManager),
+      webInterface_(webInterface),
       screenManager_(screenManager) {}
 
 void AppController::begin() {
@@ -29,6 +31,7 @@ void AppController::begin() {
   display_.invertDisplay(TFT_INVERT_COLORS);
   display_.fillScreen(UiTheme::Background);
   sdManager_.begin();
+  webInterface_.begin();
   touchInput_.begin();
   sensorManager_.begin();
 
@@ -44,6 +47,7 @@ void AppController::update() {
   const uint32_t nowMs = millis();
   backlightManager_.update(nowMs);
   sensorManager_.update(nowMs);
+  webInterface_.update();
   const TouchState touchState = touchInput_.update(nowMs);
   handleSerialInput();
   screenManager_.update(nowMs, touchState);

@@ -69,6 +69,23 @@ The display target uses Arduino_GFX for the TFT.
   cylinder count, CH1 reference value, per-channel delta, max delta, SD status,
   raw/filtered ADC values, pulse Hz, RPM, and RPM stability.
 
+## Web Interface And WiFi
+
+The display starts a local access point and a small built-in web interface.
+Connect to:
+
+```text
+SSID: Carbtune-Pro
+Password: carbtunepro
+URL: http://192.168.4.1/
+```
+
+The web interface can scan nearby WiFi networks, save SSID/password to ESP32
+NVS, reconnect as a station, and keep AP mode available for service access.
+It also exposes basic device settings plus customer and vehicle profile fields.
+Saved WiFi credentials, customer name, vehicle name, and profile notes are
+stored in ESP32 NVS, not on SD.
+
 ## SD Card
 
 The display initializes SD through `SdManager` after TFT setup using a separate
