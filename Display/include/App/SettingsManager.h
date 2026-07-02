@@ -4,6 +4,11 @@
 
 class SettingsManager {
  public:
+  enum class Units : uint8_t {
+    Kpa,
+    InHg,
+  };
+
   enum class DampingMode : uint8_t {
     Low,
     Normal,
@@ -30,6 +35,7 @@ class SettingsManager {
   uint8_t brightnessMinPercent() const;
   uint8_t brightnessMaxPercent() const;
   uint8_t brightnessManualPercent() const;
+  Units unitsMode() const;
   const char *units() const;
   bool autoScale() const;
   float filterSeconds() const;
@@ -39,19 +45,32 @@ class SettingsManager {
   const char *dampingName() const;
   float dampingAlpha() const;
   const char *engineStrokeName() const;
+  RpmSource rpmSource() const;
   const char *rpmSourceName() const;
 
+  bool save();
+  void reload();
+  void resetDefaults();
   void setAutoBrightness(bool enabled);
+  void setAutoScale(bool enabled);
+  void setUnits(Units units);
   void setBrightnessManualPercent(uint8_t percent);
+  void setAlarmDeltaKpa(float threshold);
   void setCylinders(uint8_t cylinders);
   void setDemoFallback(bool enabled);
   void toggleDemoFallback();
+  void toggleAutoBrightness();
+  void toggleAutoScale();
+  void toggleUnits();
   void cycleDampingMode();
   void toggleEngineStroke();
   void cycleRpmSource();
 
  private:
+  void load();
+
   uint8_t cylinders_ = 4;
+  Units units_ = Units::Kpa;
   bool autoBrightness_ = true;
   uint8_t brightnessMinPercent_ = 40;
   uint8_t brightnessMaxPercent_ = 100;
