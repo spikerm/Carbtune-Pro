@@ -35,6 +35,7 @@ class ScrollView {
   float velocity_ = 0.0f;
   uint32_t lastUpdateMs_ = 0;
   bool wasPressed_ = false;
+  bool tracking_ = false;
   bool dragging_ = false;
   bool clickReleased_ = false;
 };

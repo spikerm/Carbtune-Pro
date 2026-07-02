@@ -2,8 +2,8 @@
 
 #include "Theme/Theme.h"
 
-static constexpr int16_t DragThresholdPx = 5;
-static constexpr int16_t ScrollGain = 2;
+static constexpr int16_t DragThresholdPx = 4;
+static constexpr int16_t ScrollGain = 5;
 
 ScrollView::ScrollView(Rect viewport, int16_t contentHeight)
     : viewport_(viewport), contentHeight_(contentHeight) {}
@@ -12,6 +12,7 @@ void ScrollView::begin() {
   offset_ = 0;
   velocity_ = 0.0f;
   wasPressed_ = false;
+  tracking_ = false;
   dragging_ = false;
   clickReleased_ = false;
   lastUpdateMs_ = millis();
@@ -19,16 +20,17 @@ void ScrollView::begin() {
 
 void ScrollView::update(uint32_t nowMs, const TouchState &touchState) {
   clickReleased_ = false;
-  const bool inside = touchState.pressed && contains(touchState.screenX, touchState.screenY);
+  const bool pressedInside = touchState.pressed && contains(touchState.screenX, touchState.screenY);
 
-  if (inside && !wasPressed_) {
+  if (pressedInside && !wasPressed_) {
+    tracking_ = true;
     startY_ = touchState.screenY;
     lastY_ = touchState.screenY;
     clickX_ = touchState.screenX;
     clickY_ = touchState.screenY;
     velocity_ = 0.0f;
     dragging_ = false;
-  } else if (inside && wasPressed_) {
+  } else if (touchState.pressed && tracking_) {
     const int16_t dy = touchState.screenY - lastY_;
     if (!dragging_ && abs(touchState.screenY - startY_) > DragThresholdPx) {
       dragging_ = true;
@@ -39,8 +41,9 @@ void ScrollView::update(uint32_t nowMs, const TouchState &touchState) {
       clampOffset();
     }
     lastY_ = touchState.screenY;
-  } else if (!touchState.pressed && wasPressed_) {
+  } else if (!touchState.pressed && tracking_) {
     clickReleased_ = !dragging_;
+    tracking_ = false;
   }
 
   if (!touchState.pressed && fabsf(velocity_) > 0.25f) {
