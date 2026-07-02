@@ -150,9 +150,22 @@ URL: http://192.168.4.1/
 
 The web interface can scan nearby WiFi networks, save SSID/password to ESP32
 NVS, reconnect as a station, and keep AP mode available for service access.
-It also exposes basic device settings plus customer and vehicle profile fields.
-Saved WiFi credentials, customer name, vehicle name, and profile notes are
-stored in ESP32 NVS, not on SD.
+It now acts as the main menu for settings, live measurements, OTA updates, and
+customer/vehicle profiles. The display itself stays focused on the measurement
+dashboard and no longer shows a touch MENU button.
+
+Open `/live` from the web interface for a live measurement page that refreshes
+every 2 seconds. It shows source mode, RPM, max delta, per-channel kPa, raw ADC,
+filtered ADC, and pulse frequency.
+
+Saved WiFi credentials and the current customer/vehicle form values are stored
+in ESP32 NVS. Each saved customer/vehicle profile is also appended to SD at:
+
+```text
+/carbtune/config/vehicle_profiles.tsv
+```
+
+The web interface shows this SD history under `Voorgaande voertuigprofielen`.
 
 ## SD Card
 
@@ -188,6 +201,12 @@ Default SD folder layout:
 /carbtune/firmware    future firmware updates
 /carbtune/exports     exports
 /carbtune/screenshots future screenshots
+```
+
+Vehicle/customer profile history is stored in:
+
+```text
+/carbtune/config/vehicle_profiles.tsv
 ```
 
 ## Cylinder Reference Mode
