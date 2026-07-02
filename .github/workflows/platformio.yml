@@ -28,42 +28,34 @@ jobs:
         run: pip install platformio
 
       - name: Build display firmware
-        run: pio run -e display
+        run: |
+          pio run -e display
+          mkdir -p firmware-artifacts
+          cp .pio/build/display/firmware.bin firmware-artifacts/display-firmware.bin
 
       - name: Build SensorNode firmware
-        run: pio run -e sensornode
-
-      - name: Prepare firmware artifacts
         run: |
-          echo "Available PlatformIO binaries:"
-          find .pio/build -maxdepth 3 -type f -name '*.bin' -print | sort
+          pio run -e sensornode
+          mkdir -p firmware-artifacts
+          cp .pio/build/sensornode/firmware.bin firmware-artifacts/sensornode-firmware.bin
+
+      - name: Add artifact version info
+        run: |
           python - <<'PY'
           from datetime import datetime, timezone
           from pathlib import Path
           import os
           import re
-          import shutil
 
           root = Path.cwd()
           out = root / "firmware-artifacts"
           out.mkdir(exist_ok=True)
 
-          def firmware_for(environment):
-              env_dir = root / ".pio" / "build" / environment
-              preferred = env_dir / "firmware.bin"
-              if preferred.exists():
-                  return preferred
-              matches = sorted(
-                  path for path in env_dir.glob("*.bin")
-                  if path.name not in {"bootloader.bin", "partitions.bin"}
-              )
-              if matches:
-                  return matches[0]
-              all_bins = "\n".join(str(path) for path in sorted((root / ".pio" / "build").glob("**/*.bin")))
-              raise FileNotFoundError(f"Missing firmware binary for {environment}. Available bins:\n{all_bins}")
-
-          shutil.copyfile(firmware_for("display"), out / "display-firmware.bin")
-          shutil.copyfile(firmware_for("sensornode"), out / "sensornode-firmware.bin")
+          required = ["display-firmware.bin", "sensornode-firmware.bin"]
+          for name in required:
+              path = out / name
+              if not path.exists():
+                  raise FileNotFoundError(f"Missing prepared artifact: {path}")
 
           version_text = (root / "Display" / "include" / "version.h").read_text(encoding="utf-8")
           match = re.search(r'#define\s+FW_VERSION\s+"([^"]+)"', version_text)
