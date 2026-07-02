@@ -2,7 +2,8 @@
 
 #include "Theme/Theme.h"
 
-static constexpr int16_t DragThresholdPx = 8;
+static constexpr int16_t DragThresholdPx = 5;
+static constexpr int16_t ScrollGain = 2;
 
 ScrollView::ScrollView(Rect viewport, int16_t contentHeight)
     : viewport_(viewport), contentHeight_(contentHeight) {}
@@ -33,8 +34,8 @@ void ScrollView::update(uint32_t nowMs, const TouchState &touchState) {
       dragging_ = true;
     }
     if (dragging_) {
-      offset_ -= dy;
-      velocity_ = (velocity_ * 0.55f) + (static_cast<float>(-dy) * 0.45f);
+      offset_ -= dy * ScrollGain;
+      velocity_ = (velocity_ * 0.45f) + (static_cast<float>(-dy * ScrollGain) * 0.55f);
       clampOffset();
     }
     lastY_ = touchState.screenY;
@@ -44,7 +45,7 @@ void ScrollView::update(uint32_t nowMs, const TouchState &touchState) {
 
   if (!touchState.pressed && fabsf(velocity_) > 0.25f) {
     offset_ += static_cast<int16_t>(velocity_);
-    velocity_ *= 0.86f;
+    velocity_ *= 0.82f;
     clampOffset();
   }
 

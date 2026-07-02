@@ -47,10 +47,18 @@ void SettingsScreen::begin() {
 }
 
 void SettingsScreen::update(uint32_t nowMs, const TouchState &touchState) {
+  const bool pressed = touchState.pressed && !touchWasPressed_;
   const bool released = !touchState.pressed && touchWasPressed_;
   if (touchState.pressed) {
     lastTouchX_ = touchState.screenX;
     lastTouchY_ = touchState.screenY;
+  }
+
+  if (pressed && !scrollView_.contains(touchState.screenX, touchState.screenY)) {
+    handleClick(touchState.screenX, touchState.screenY);
+    touchWasPressed_ = touchState.pressed;
+    drawMessage(nowMs);
+    return;
   }
 
   scrollView_.update(nowMs, touchState);
@@ -59,8 +67,6 @@ void SettingsScreen::update(uint32_t nowMs, const TouchState &touchState) {
   }
   if (scrollView_.wasClickReleased()) {
     handleClick(scrollView_.clickX(), scrollView_.clickY());
-  } else if (released && !scrollView_.contains(lastTouchX_, lastTouchY_)) {
-    handleClick(lastTouchX_, lastTouchY_);
   }
 
   drawMessage(nowMs);
@@ -142,7 +148,7 @@ void SettingsScreen::drawList() {
   drawSection("ALGEMEEN", 8 - offset);
   drawRow("Aantal cilinders", "", 28 - offset);
   const int16_t segmentY = ViewY + 28 - offset + 6;
-  if (segmentY >= ViewY - 28 && segmentY < ViewY + ViewH) {
+  if (segmentY >= ViewY && segmentY + 24 <= ViewY + ViewH) {
     drawSegmentButton("2", ViewX + 172, segmentY, 40, draft_.cylinders == 2);
     drawSegmentButton("4", ViewX + 218, segmentY, 40, draft_.cylinders == 4);
     drawSegmentButton("6", ViewX + 264, segmentY, 40, draft_.cylinders == 6);
@@ -199,7 +205,7 @@ void SettingsScreen::drawMessage(uint32_t nowMs) {
 
 void SettingsScreen::drawSection(const char *title, int16_t y) {
   const int16_t screenY = ViewY + y;
-  if (screenY < ViewY - 16 || screenY > ViewY + ViewH) {
+  if (screenY < ViewY || screenY + 14 > ViewY + ViewH) {
     return;
   }
   display_.setTextSize(1);
@@ -212,7 +218,7 @@ void SettingsScreen::drawSection(const char *title, int16_t y) {
 void SettingsScreen::drawRow(const char *label, const String &value, int16_t y, bool button,
                              bool active) {
   const int16_t screenY = ViewY + y;
-  if (screenY < ViewY - RowHeight || screenY > ViewY + ViewH) {
+  if (screenY < ViewY || screenY + RowHeight > ViewY + ViewH) {
     return;
   }
 
