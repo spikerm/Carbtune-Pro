@@ -311,20 +311,24 @@ void SettingsScreen::handleClick(int16_t screenX, int16_t screenY) {
   } else if (contentHit(y, 440)) {
     pendingAction_ = SettingsAction::Calibration;
   } else if (contentHit(y, 646)) {
+    Serial.println("settings action=TEST_SD");
     const bool ok = sdManager_.writeTestFile() && sdManager_.readTestFile();
     setMessage(ok ? "SD test OK" : sdManager_.lastErrorName(), millis());
     drawList();
   } else if (contentHit(y, 682)) {
+    Serial.println("settings action=REPAIR_SD_FOLDERS");
     const bool ok = sdManager_.repairFilesystemLayout();
     setMessage(ok ? "SD mappen hersteld" : sdManager_.lastErrorName(), millis());
     drawList();
   } else if (contentHit(y, 718)) {
+    Serial.println("settings action=EXPORT_SETTINGS");
     applyDraft();
     settings_.save();
     const bool ok = sdManager_.exportSettings(settings_);
     setMessage(ok ? "Export OK" : sdManager_.lastErrorName(), millis());
     drawList();
   } else if (contentHit(y, 754)) {
+    Serial.println("settings action=IMPORT_SETTINGS");
     const bool ok = sdManager_.importSettings(settings_);
     loadDraft();
     setMessage(ok ? "Import OK" : sdManager_.lastErrorName(), millis());
