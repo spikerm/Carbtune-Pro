@@ -141,6 +141,9 @@ bool SdManager::writeTestFile() {
   if (!ensureDefaultFolders()) {
     return false;
   }
+  if (SD.exists(TestFilePath)) {
+    SD.remove(TestFilePath);
+  }
   File file = SD.open(TestFilePath, FILE_WRITE);
   if (!file) {
     lastError_ = Error::File;
@@ -176,6 +179,9 @@ bool SdManager::repairFilesystemLayout() {
 bool SdManager::exportSettings(const SettingsManager &settings) {
   if (!ensureDefaultFolders()) {
     return false;
+  }
+  if (SD.exists(SettingsPath)) {
+    SD.remove(SettingsPath);
   }
   File file = SD.open(SettingsPath, FILE_WRITE);
   if (!file) {

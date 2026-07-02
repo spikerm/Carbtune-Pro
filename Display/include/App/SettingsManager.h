@@ -43,8 +43,10 @@ class SettingsManager {
   bool demoFallback() const;
   bool liveUartEnabled() const;
   const char *dampingName() const;
+  DampingMode dampingMode() const;
   float dampingAlpha() const;
   const char *engineStrokeName() const;
+  EngineStroke engineStroke() const;
   RpmSource rpmSource() const;
   const char *rpmSourceName() const;
 

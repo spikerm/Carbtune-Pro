@@ -74,6 +74,10 @@ const char *SettingsManager::dampingName() const {
   return "normaal";
 }
 
+SettingsManager::DampingMode SettingsManager::dampingMode() const {
+  return dampingMode_;
+}
+
 float SettingsManager::dampingAlpha() const {
   switch (dampingMode_) {
     case DampingMode::Low:
@@ -88,6 +92,10 @@ float SettingsManager::dampingAlpha() const {
 
 const char *SettingsManager::engineStrokeName() const {
   return engineStroke_ == EngineStroke::FourStroke ? "4-takt" : "2-takt";
+}
+
+SettingsManager::EngineStroke SettingsManager::engineStroke() const {
+  return engineStroke_;
 }
 
 SettingsManager::RpmSource SettingsManager::rpmSource() const {

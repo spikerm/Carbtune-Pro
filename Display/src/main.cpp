@@ -30,7 +30,7 @@ static TouchInput touchInput(touch);
 static CalibrationScreen calibrationScreen(*gfx);
 static DashboardScreen dashboardScreen(*gfx, sensorManager);
 static GraphScreen graphScreen(*gfx);
-static SettingsScreen settingsScreen(*gfx, settingsManager);
+static SettingsScreen settingsScreen(*gfx, settingsManager, sdManager);
 static SplashScreen splashScreen(*gfx, sdManager);
 static TouchDiagnosticsScreen touchDiagnosticsScreen(*gfx, touchInput, backlightManager, sensorManager,
                                                      sdManager);
