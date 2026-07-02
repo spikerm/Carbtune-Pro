@@ -34,6 +34,43 @@ test files, settings export, and settings import.
 pio run
 ```
 
+## GitHub Firmware Artifacts
+
+Every push to `main` and every `v*` tag builds both PlatformIO environments in
+GitHub Actions:
+
+```sh
+pio run -e display
+pio run -e sensornode
+```
+
+The workflow uploads one downloadable artifact named:
+
+```text
+carbtune-firmware-<git-sha>
+```
+
+It contains:
+
+```text
+display-firmware.bin      Display firmware, used later for display OTA updates
+sensornode-firmware.bin   SensorNode firmware
+version.txt               firmware version, commit SHA, build time, environments
+```
+
+Download it from GitHub:
+
+1. Open the repository on GitHub.
+2. Go to `Actions`.
+3. Open the latest successful PlatformIO run.
+4. Download `carbtune-firmware-<git-sha>` from the artifacts section.
+
+For future OTA updates, the display updater will use `display-firmware.bin`.
+SensorNode update support will be handled separately later.
+
+When a tag matching `v*` is pushed, the same files are also uploaded as release
+assets.
+
 ## Upload
 
 ```sh
